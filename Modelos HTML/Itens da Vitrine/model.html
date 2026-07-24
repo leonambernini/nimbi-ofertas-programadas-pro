@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR" style="">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Showcase de Contagem Regressiva - Ofertas Pro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Montserrat:wght@100..900&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#ffb3b1",
+                        "outline": "#8f6f6e",
+                        "surface-tint": "#bb152c",
+                        "surface-container": "#eeeeee",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#6fd8c8",
+                        "surface": "#f9f9f9",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#00685d",
+                        "secondary-fixed-dim": "#b0c7f1",
+                        "on-tertiary-container": "#f4fffb",
+                        "on-surface-variant": "#5b403f",
+                        "on-primary-fixed-variant": "#92001c",
+                        "on-surface": "#1a1c1c",
+                        "background": "#f9f9f9",
+                        "outline-variant": "#e4bebc",
+                        "on-primary-container": "#fffbff",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-secondary-fixed-variant": "#30476a",
+                        "primary-container": "#db313f",
+                        "on-tertiary-fixed-variant": "#005048",
+                        "tertiary-container": "#008376",
+                        "on-primary-fixed": "#410007",
+                        "surface-container-highest": "#e2e2e2",
+                        "error": "#ba1a1a",
+                        "on-background": "#1a1c1c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#001b3c",
+                        "secondary-container": "#bbd3fd",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f3f3",
+                        "surface-bright": "#f9f9f9",
+                        "secondary": "#485f84",
+                        "surface-container-high": "#e8e8e8",
+                        "tertiary-fixed": "#8cf5e4",
+                        "surface-variant": "#e2e2e2",
+                        "inverse-primary": "#ffb3b1",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#d5e3ff",
+                        "on-secondary-container": "#445a7f",
+                        "surface-dim": "#dadada",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdad8",
+                        "primary": "#b7102a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "base": "4px",
+                        "lg": "24px",
+                        "sm": "12px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "margin-desktop": "48px",
+                        "xs": "8px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Montserrat"],
+                        "countdown-mono": ["JetBrains Mono"],
+                        "display-price": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg-mobile": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "countdown-mono": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+                        "display-price": ["28px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .countdown-pulse {
+            animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-border {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(circle at 2px 2px, #e2e8f0 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background font-body-md min-h-screen grid-bg">
+    <!-- TopNavBar -->
+
+    <main class="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+        <!-- Header Section -->
+        <header class="mb-xl">
+            <h1 class="font-headline-xl text-headline-xl text-on-surface mb-xs">Modelos de Countdown</h1>
+            <p class="text-on-surface-variant font-body-md max-w-2xl">
+                Variantes de componentes de contagem regressiva para produtos em promoção, focados em gerar urgência e
+                conversão.
+            </p>
+        </header>
+        <!-- Showcase Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+            <!-- Style 1: Corner Badge/Chip -->
+            <div
+                class="bg-surface-container-lowest border border-outline-variant p-xl flex flex-col gap-md items-center justify-center min-h-[320px] relative overflow-hidden group">
+                <span
+                    class="absolute top-0 left-0 bg-on-surface-variant text-surface px-md py-xs font-label-caps text-label-caps uppercase tracking-widest">Estilo
+                    01</span>
+                <!-- The Component -->
+                <div class="bg-primary px-md py-sm rounded-full shadow-lg flex items-center gap-xs text-on-primary">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">timer</span>
+                    <span class="font-label-caps text-label-caps uppercase">Termina em</span>
+                    <span class="font-countdown-mono text-countdown-mono tracking-wider tabular-nums">02:14:08</span>
+                </div>
+                <div class="mt-xl text-center">
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile mb-xs">Badge de Canto</h3>
+                    <p class="text-body-sm text-on-surface-variant italic">Ideal para sobreposição em imagens de
+                        produtos (Top-Left ou Bottom-Right).</p>
+                </div>
+            </div>
+            <!-- Style 2: Compact Bar for Prices -->
+            <div
+                class="bg-surface-container-lowest border border-outline-variant p-xl flex flex-col gap-md items-center justify-center min-h-[320px] relative overflow-hidden">
+                <span
+                    class="absolute top-0 left-0 bg-on-surface-variant text-surface px-md py-xs font-label-caps text-label-caps uppercase tracking-widest">Estilo
+                    02</span>
+                <!-- The Component -->
+                <div class="w-full max-w-[280px]">
+                    <div class="flex items-center justify-between mb-xs">
+                        <span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Oferta Expira</span>
+                        <span class="font-countdown-mono text-sm text-primary tabular-nums">05:42:12</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden">
+                        <div class="h-full bg-primary w-[65%] rounded-full"></div>
+                    </div>
+                </div>
+                <div class="mt-xl text-center">
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile mb-xs">Barra Compacta</h3>
+                    <p class="text-body-sm text-on-surface-variant italic">Perfeita para visualização de listagem, logo
+                        abaixo do preço principal.</p>
+                </div>
+            </div>
+            <!-- Style 3: Flash Sale Pill -->
+            <div
+                class="bg-surface-container-lowest border border-outline-variant p-xl flex flex-col gap-md items-center justify-center min-h-[320px] relative overflow-hidden group">
+                <span
+                    class="absolute top-0 left-0 bg-on-surface-variant text-surface px-md py-xs font-label-caps text-label-caps uppercase tracking-widest">Estilo
+                    03</span>
+                <!-- The Component -->
+                <div
+                    class="bg-on-secondary-fixed text-tertiary-fixed border border-tertiary-fixed-dim rounded-full pl-sm pr-md py-base flex items-center gap-sm shadow-xl countdown-pulse">
+                    <div class="flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-primary-fixed"
+                            style="font-variation-settings: 'FILL' 1;">bolt</span>
+                        <span
+                            class="font-headline-lg-mobile text-[16px] uppercase italic font-black text-on-primary">FLASH
+                            SALE</span>
+                    </div>
+                    <div class="h-4 w-[1px] bg-outline-variant opacity-30"></div>
+                    <span
+                        class="font-countdown-mono text-countdown-mono text-primary-fixed-dim tabular-nums">00:59:59</span>
+                </div>
+                <div class="mt-xl text-center">
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile mb-xs">Flash Sale Pill</h3>
+                    <p class="text-body-sm text-on-surface-variant italic">Alta urgência. Fundo Navy e texto em destaque
+                        com pulsação sutil.</p>
+                </div>
+            </div>
+            <!-- Style 4: Minimalist Inline -->
+            <div
+                class="bg-surface-container-lowest border border-outline-variant p-xl flex flex-col gap-md items-center justify-center min-h-[320px] relative overflow-hidden">
+                <span
+                    class="absolute top-0 left-0 bg-on-surface-variant text-surface px-md py-xs font-label-caps text-label-caps uppercase tracking-widest">Estilo
+                    04</span>
+                <!-- The Component -->
+                <div class="flex items-baseline gap-xs">
+
+                    <div class="flex gap-1">
+                        <div class="bg-surface-container-high px-2 py-1 rounded font-countdown-mono text-on-surface">12
+                        </div>
+                        <span class="text-on-surface font-bold">:</span>
+                        <div class="bg-surface-container-high px-2 py-1 rounded font-countdown-mono text-on-surface">30
+                        </div>
+                        <span class="text-on-surface font-bold">:</span>
+                        <div class="bg-surface-container-high px-2 py-1 rounded font-countdown-mono text-on-surface">05
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-xl text-center">
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile mb-xs">Inline Minimalista</h3>
+                    <p class="text-body-sm text-on-surface-variant italic">Para interfaces limpas onde o tempo é uma
+                        informação secundária.</p>
+                </div>
+            </div>
+            <!-- Style 5: Large Hero Urgency -->
+            <div
+                class="bg-surface-container-lowest border border-outline-variant p-xl flex flex-col gap-md items-center justify-center min-h-[320px] lg:col-span-2 relative overflow-hidden">
+                <span
+                    class="absolute top-0 left-0 bg-on-surface-variant text-surface px-md py-xs font-label-caps text-label-caps uppercase tracking-widest">Estilo
+                    05 (Hero)</span>
+                <!-- The Component -->
+                <div class="flex flex-col items-center gap-md">
+                    <div
+                        class="bg-primary text-on-primary px-xl py-lg rounded-xl shadow-2xl flex flex-col items-center">
+                        <span class="font-label-caps text-label-caps mb-sm opacity-90">A MAIOR PROMOÇÃO DO ANO ACABA
+                            EM:</span>
+                        <div class="flex gap-md">
+                            <div class="flex flex-col items-center">
+                                <span class="font-display-price text-[48px] leading-none tabular-nums">03</span>
+                                <span class="text-[10px] font-label-caps opacity-75">DIAS</span>
+                            </div>
+                            <span class="font-display-price text-[48px] leading-none opacity-50">:</span>
+                            <div class="flex flex-col items-center">
+                                <span class="font-display-price text-[48px] leading-none tabular-nums">18</span>
+                                <span class="text-[10px] font-label-caps opacity-75">HORAS</span>
+                            </div>
+                            <span class="font-display-price text-[48px] leading-none opacity-50">:</span>
+                            <div class="flex flex-col items-center">
+                                <span class="font-display-price text-[48px] leading-none tabular-nums">54</span>
+                                <span class="text-[10px] font-label-caps opacity-75">MINS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-xl text-center">
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile mb-xs">Hero Banner Timer</h3>
+                    <p class="text-body-sm text-on-surface-variant italic">Para páginas de destino de campanhas ou
+                        banners principais de categoria.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+
+    <!-- BottomNavBar (Mobile only) -->
+    <div
+        class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-xs border-t border-surface-variant bg-surface shadow-lg rounded-t-xl">
+        <button
+            class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-90">
+            <span class="material-symbols-outlined">home</span>
+            <span class="font-label-caps text-[10px]">Início</span>
+        </button>
+        <button class="flex flex-col items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined">bolt</span>
+            <span class="font-label-caps text-[10px]">Ofertas</span>
+        </button>
+        <button class="flex flex-col items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined">shopping_cart</span>
+            <span class="font-label-caps text-[10px]">Carrinho</span>
+        </button>
+        <button class="flex flex-col items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined">person</span>
+            <span class="font-label-caps text-[10px]">Perfil</span>
+        </button>
+    </div>
+    <script>
+        // Simple script to handle real-time countdown updates for demonstration
+        function updateTimers() {
+            const timers = document.querySelectorAll('.font-countdown-mono, .font-display-price');
+            timers.forEach(timer => {
+                // In a real app, logic would go here to decrement based on a specific target date
+                // For this showcase, we just keep the static values provided in the UI prompt
+            });
+        }
+        setInterval(updateTimers, 1000);
+    </script>
+
+
+</body>
+
+</html>

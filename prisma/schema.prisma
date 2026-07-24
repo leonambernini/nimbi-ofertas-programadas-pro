@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["ofertas"]
+}
+
+enum SubscriptionStatus {
+  none
+  trial
+  active
+  past_due
+  cancelled
+  suspended
+
+  @@schema("ofertas")
+}
+
+enum OfferStatus {
+  draft
+  scheduled
+  active
+  ended
+  disabled
+
+  @@schema("ofertas")
+}
+
+enum ProductSelectionType {
+  manual
+  category
+
+  @@schema("ofertas")
+}
+
+enum PriceFillMode {
+  percent
+  fixed
+  manual
+
+  @@schema("ofertas")
+}
+
+enum BannerType {
+  image
+  countdown_bar
+
+  @@schema("ofertas")
+}
+
+enum ShowcaseSlot {
+  before_main_content
+  after_header
+  before_section_products_sale
+  after_section_products_sale
+  before_section_products_featured
+  after_section_products_featured
+  before_footer
+
+  @@schema("ofertas")
+}
+
+enum BannerSlot {
+  before_main_content
+  after_header
+  drawer_left
+  drawer_right
+  before_footer
+  before_section_products_sale
+  after_section_products_sale
+  before_section_products_new
+  after_section_products_new
+  before_section_products_featured
+  after_section_products_featured
+
+  @@schema("ofertas")
+}
+
+enum OfferCronAction {
+  apply
+  restore
+  activate
+  deactivate
+
+  @@schema("ofertas")
+}
+
+model Store {
+  id                 String             @id @default(cuid())
+  storeId            String             @unique @map("store_id")
+  accessToken        String             @map("access_token")
+  storeName          String?            @map("store_name")
+  email              String?
+  domain             String?
+  language           String             @default("pt")
+  country            String?
+  currency           String?
+  subscriptionStatus SubscriptionStatus @default(none) @map("subscription_status")
+  planCode           String?            @map("plan_code")
+  planId             String?            @map("plan_id")
+  nextExecution      DateTime?          @map("next_execution")
+  /** Legado — trial/cobrança são controlados pela Nuvemshop (next_execution). */
+  trialEndsAt        DateTime?          @map("trial_ends_at")
+  installedAt        DateTime           @default(now()) @map("installed_at")
+  uninstalledAt      DateTime?          @map("uninstalled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  offerGroups        OfferGroup[]
+
+  @@map("stores")
+  @@schema("ofertas")
+}
+
+model OfferGroup {
+  id                    String               @id @default(cuid())
+  storeId               String               @map("store_id")
+  store                 Store                @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  name                  String
+  status                OfferStatus          @default(draft)
+  startsAt              DateTime             @map("starts_at")
+  endsAt                DateTime             @map("ends_at")
+  autoApplyPrices       Boolean              @default(false) @map("auto_apply_prices")
+  pricesApplied         Boolean              @default(false) @map("prices_applied")
+  productSelectionType  ProductSelectionType @default(manual) @map("product_selection_type")
+  categoryIds           Int[]                @default([]) @map("category_ids")
+  fillMode              PriceFillMode        @default(manual) @map("fill_mode")
+  fillValue             Decimal?             @map("fill_value") @db.Decimal(12, 2)
+  enableShowcase        Boolean              @default(false) @map("enable_showcase")
+  showcaseSlot          ShowcaseSlot         @default(before_section_products_sale) @map("showcase_slot")
+  /** Conteúdo/layout da vitrine: título, banners, textos, grid|carousel, itens/linha */
+  showcaseConfig        Json?                @map("showcase_config")
+  enableDedicatedPage   Boolean              @default(false) @map("enable_dedicated_page")
+  dedicatedPageId       Int?                 @map("dedicated_page_id")
+  dedicatedPageHandle   String?              @map("dedicated_page_handle")
+  /** Conteúdo/layout da página extra (mesma estrutura da vitrine) */
+  pageConfig            Json?                @map("page_config")
+  enableBanner          Boolean              @default(false) @map("enable_banner")
+  bannerType            BannerType           @default(countdown_bar) @map("banner_type")
+  bannerSlot            BannerSlot           @default(after_header) @map("banner_slot")
+  bannerImageUrl        String?              @map("banner_image_url")
+  bannerLinkUrl         String?              @map("banner_link_url")
+  bannerTitle           String?              @map("banner_title")
+  /** Modelo visual do banner com cronômetro (solid|strip|soft|urgent). */
+  bannerModel           String               @default("solid") @map("banner_model")
+  /** Texto inicial / final do banner com cronômetro. */
+  bannerText1           String?              @map("banner_text_1")
+  bannerText2           String?              @map("banner_text_2")
+  /** Botão/CTA opcional no banner. */
+  bannerShowButton      Boolean              @default(false) @map("banner_show_button")
+  bannerButtonText      String?              @map("banner_button_text")
+  /** Posição do CTA: before|after|full (banner inteiro clicável). */
+  bannerButtonPosition  String               @default("after") @map("banner_button_position")
+  /** Limita o box do fundo (BG) à largura máxima (container). */
+  bannerContainer       Boolean              @default(false) @map("banner_container")
+  /** Alinhamento do conteúdo: left|center|right. */
+  bannerTextAlign       String               @default("center") @map("banner_text_align")
+  /** Espaçamento superior/inferior (escala Bootstrap 0–5). */
+  bannerSpacingTop      Int                  @default(0) @map("banner_spacing_top")
+  bannerSpacingBottom   Int                  @default(0) @map("banner_spacing_bottom")
+  /** Animação do banner (none|pulse|shine|slide). */
+  bannerAnimation       String               @default("none") @map("banner_animation")
+  showCountdownOnItems  Boolean              @default(true) @map("show_countdown_on_items")
+  showCountdownOnPdp    Boolean              @default(true) @map("show_countdown_on_pdp")
+  /** Exibe dias no cronômetro (além de horas/min/seg). */
+  showDaysOnCountdown   Boolean              @default(false) @map("show_days_on_countdown")
+  /** Modelo visual do countdown nos cards da vitrine (badge|bar|flash|inline|hero) */
+  countdownItemsModel   String               @default("badge") @map("countdown_items_model")
+  /** Slot NubeSDK do countdown nos cards (override do default do modelo). */
+  countdownItemsSlot    String?              @map("countdown_items_slot")
+  /** Modelo visual do countdown na PDP (urgency_box|inline|progress|floating|banner) */
+  countdownPdpModel     String               @default("urgency_box") @map("countdown_pdp_model")
+  /** Slot NubeSDK do countdown na PDP (override do default do modelo). */
+  countdownPdpSlot      String?              @map("countdown_pdp_slot")
+  /** Textos editáveis dos modelos de cronômetro (rótulo principal / secundário). */
+  countdownText1        String?              @map("countdown_text_1")
+  countdownText2        String?              @map("countdown_text_2")
+  themePrimaryColor     String               @default("#E11D48") @map("theme_primary_color")
+  themeSecondaryColor   String               @default("#FEF2F2") @map("theme_secondary_color")
+  themeBackgroundColor  String               @default("#FFFFFF") @map("theme_background_color")
+  themeTextColor        String               @default("#111827") @map("theme_text_color")
+  themeAccentColor      String               @default("#E11D48") @map("theme_accent_color")
+  themeButtonColor      String               @default("#E11D48") @map("theme_button_color")
+  themeButtonTextColor  String               @default("#FFFFFF") @map("theme_button_text_color")
+  themeCountdownBg      String               @default("#111827") @map("theme_countdown_bg")
+  themeCountdownText    String               @default("#FFFFFF") @map("theme_countdown_text")
+  themeBorderRadius     Float                @default(8) @map("theme_border_radius")
+  enabled               Boolean              @default(true)
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
+  items                 OfferItem[]
+  cronLogs              OfferCronLog[]
+
+  @@index([storeId])
+  @@index([storeId, status])
+  @@index([startsAt, endsAt])
+  @@index([status, startsAt, endsAt])
+  @@map("offer_groups")
+  @@schema("ofertas")
+}
+
+model OfferItem {
+  id                       String     @id @default(cuid())
+  offerGroupId             String     @map("offer_group_id")
+  offerGroup               OfferGroup @relation(fields: [offerGroupId], references: [id], onDelete: Cascade)
+  productId                Int        @map("product_id")
+  variantId                Int        @map("variant_id")
+  productName              String?    @map("product_name")
+  variantName              String?    @map("variant_name")
+  sku                      String?
+  imageUrl                 String?    @map("image_url")
+  originalPrice            Decimal    @map("original_price") @db.Decimal(12, 2)
+  originalPromotionalPrice Decimal?   @map("original_promotional_price") @db.Decimal(12, 2)
+  offerPrice               Decimal    @map("offer_price") @db.Decimal(12, 2)
+  createdAt                DateTime   @default(now()) @map("created_at")
+  updatedAt                DateTime   @updatedAt @map("updated_at")
+
+  @@unique([offerGroupId, productId, variantId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("offer_items")
+  @@schema("ofertas")
+}
+
+model OfferCronLog {
+  id           String         @id @default(cuid())
+  offerGroupId String         @map("offer_group_id")
+  offerGroup   OfferGroup     @relation(fields: [offerGroupId], references: [id], onDelete: Cascade)
+  action       OfferCronAction
+  success      Boolean        @default(true)
+  message      String?
+  details      Json?
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  @@index([offerGroupId, createdAt])
+  @@map("offer_cron_logs")
+  @@schema("ofertas")
+}

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Modelos de Countdown - Página de Produto (PDP)</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Inter:wght@400;600&family=JetBrains+Mono:wght@700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Montserrat:wght@100..900&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f3f3f3",
+                        "on-primary-fixed-variant": "#92001c",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f9f9f9",
+                        "primary-fixed": "#ffdad8",
+                        "secondary-container": "#bbd3fd",
+                        "on-secondary-container": "#445a7f",
+                        "primary-fixed-dim": "#ffb3b1",
+                        "error": "#ba1a1a",
+                        "tertiary": "#00685d",
+                        "on-background": "#1a1c1c",
+                        "secondary": "#485f84",
+                        "tertiary-container": "#008376",
+                        "surface-container-high": "#e8e8e8",
+                        "on-tertiary-container": "#f4fffb",
+                        "secondary-fixed": "#d5e3ff",
+                        "on-secondary-fixed": "#001b3c",
+                        "on-surface-variant": "#5b403f",
+                        "surface-container": "#eeeeee",
+                        "on-tertiary-fixed-variant": "#005048",
+                        "on-primary-fixed": "#410007",
+                        "surface-container-highest": "#e2e2e2",
+                        "inverse-on-surface": "#f1f1f1",
+                        "outline": "#8f6f6e",
+                        "surface": "#f9f9f9",
+                        "outline-variant": "#e4bebc",
+                        "surface-tint": "#bb152c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#30476a",
+                        "secondary-fixed-dim": "#b0c7f1",
+                        "background": "#f9f9f9",
+                        "on-tertiary-fixed": "#00201c",
+                        "primary-container": "#db313f",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "primary": "#b7102a",
+                        "inverse-surface": "#2f3131",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#ffb3b1",
+                        "on-primary-container": "#fffbff",
+                        "tertiary-fixed-dim": "#6fd8c8",
+                        "tertiary-fixed": "#8cf5e4",
+                        "on-surface": "#1a1c1c",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "margin-mobile": "16px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "xs": "8px",
+                        "gutter": "16px",
+                        "md": "16px",
+                        "sm": "12px",
+                        "margin-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-xl": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "display-price": ["Montserrat"],
+                        "countdown-mono": ["JetBrains Mono"],
+                        "label-caps": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .countdown-pulse {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .bg-grid-pattern {
+            background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+
+<body class="bg-surface font-body-md text-on-surface antialiased bg-grid-pattern min-h-screen pb-xl">
+    <main class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop pt-xl space-y-xl">
+        <!-- Header Section -->
+        <header class="mb-xl">
+            <span class="font-label-caps text-label-caps text-primary tracking-widest uppercase">Design System
+                Showcase</span>
+            <h1 class="font-headline-xl text-headline-xl text-on-background mt-xs">Modelos de Countdown</h1>
+            <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-sm">
+                Exploração de componentes de urgência otimizados para Páginas de Detalhes de Produto (PDP), focados em
+                conversão e clareza visual.
+            </p>
+        </header>
+        <!-- Style 01: High Urgency Box -->
+        <section class="space-y-md">
+            <div class="flex items-center gap-xs">
+                <span class="w-2 h-6 bg-primary"></span>
+                <h2 class="font-headline-lg text-headline-lg">01. High Urgency Box</h2>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm">
+                <!-- Implementation -->
+                <div class="bg-primary p-md rounded-lg flex flex-col md:flex-row items-center justify-between gap-md">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-white text-[32px]">bolt</span>
+                        <span
+                            class="font-headline-lg text-headline-lg text-white tracking-tight leading-none uppercase">A
+                            oferta expira em</span>
+                    </div>
+                    <div class="flex gap-sm">
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="bg-white/10 backdrop-blur-md rounded px-md py-xs border border-white/20 min-w-[64px] text-center">
+                                <span class="font-countdown-mono text-countdown-mono text-white text-2xl">02</span>
+                            </div>
+                            <span class="font-label-caps text-[10px] text-white/80 mt-1">HORAS</span>
+                        </div>
+                        <div class="font-countdown-mono text-white text-2xl py-xs">:</div>
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="bg-white/10 backdrop-blur-md rounded px-md py-xs border border-white/20 min-w-[64px] text-center">
+                                <span class="font-countdown-mono text-countdown-mono text-white text-2xl">45</span>
+                            </div>
+                            <span class="font-label-caps text-[10px] text-white/80 mt-1">MINS</span>
+                        </div>
+                        <div class="font-countdown-mono text-white text-2xl py-xs">:</div>
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="bg-white/10 backdrop-blur-md rounded px-md py-xs border border-white/20 min-w-[64px] text-center">
+                                <span
+                                    class="font-countdown-mono text-countdown-mono text-white text-2xl countdown-pulse">12</span>
+                            </div>
+                            <span class="font-label-caps text-[10px] text-white/80 mt-1">SEGS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Style 02: Subtle Inline -->
+        <section class="space-y-md">
+            <div class="flex items-center gap-xs">
+                <span class="w-2 h-6 bg-primary"></span>
+                <h2 class="font-headline-lg text-headline-lg">02. Subtle Inline</h2>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm">
+                <!-- Implementation context (Price Area) -->
+                <div class="flex flex-wrap items-end gap-md">
+                    <div class="flex flex-col">
+                        <span class="font-body-sm text-body-sm text-on-surface-variant line-through">R$ 1.299,00</span>
+                        <span class="font-display-price text-display-price text-primary">R$ 899,90</span>
+                    </div>
+                    <div
+                        class="flex items-center bg-secondary-fixed text-on-secondary-fixed px-sm py-xs rounded-full border border-secondary/20 mb-1">
+                        <span class="material-symbols-outlined text-sm mr-1"
+                            style="font-variation-settings: 'FILL' 1;">bolt</span>
+                        <span class="font-label-caps text-[11px] mr-2">OFERTA FLASH:</span>
+                        <span class="font-countdown-mono text-body-md tracking-tighter">04:12:55</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Style 03: Progress & Urgency -->
+        <section class="space-y-md">
+            <div class="flex items-center gap-xs">
+                <span class="w-2 h-6 bg-primary"></span>
+                <h2 class="font-headline-lg text-headline-lg">03. Progress & Urgency</h2>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm max-w-md">
+                <!-- Implementation -->
+                <div class="space-y-sm">
+                    <div class="flex justify-between items-end">
+                        <div class="flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-primary"
+                                style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+                            <span class="font-label-caps text-label-caps text-on-surface font-bold">85% RESERVADO</span>
+                        </div>
+                        <div class="font-body-sm text-body-sm text-on-surface-variant">
+                            Termina em: <span class="font-countdown-mono text-primary font-bold">12:05:01</span>
+                        </div>
+                    </div>
+                    <!-- Stock Bar -->
+                    <div
+                        class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden border border-outline-variant/50">
+                        <div class="h-full bg-primary rounded-full" style="width: 85%"></div>
+                    </div>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant italic">
+                        Restam apenas 12 unidades em estoque promocional.
+                    </p>
+                </div>
+            </div>
+        </section>
+        <!-- Style 04: Floating Trust Badge -->
+        <section class="space-y-md">
+            <div class="flex items-center gap-xs">
+                <span class="w-2 h-6 bg-primary"></span>
+                <h2 class="font-headline-lg text-headline-lg">04. Floating Trust Badge</h2>
+            </div>
+            <div
+                class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm relative overflow-hidden min-h-[200px] flex items-center justify-center">
+                <!-- Simulated Product Area -->
+                <div class="relative w-48 h-48 bg-surface-container rounded-lg flex items-center justify-center">
+                    <img class="w-32 h-32 object-contain opacity-50"
+                        data-alt="A high-end modern professional camera lens with a sleek glass finish, presented on a minimalist gray background with soft studio lighting. The image captures the premium craftsmanship and high-tech feel of the product, reflecting a professional and energetic retail environment using a palette of whites, grays, and subtle deep red accents."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf6eJS2DESYwVVNrJe3Qs0sbfR-6CWPDvtnCj7jxcAR_zxviQwyAaoGM1wSh0MKLAOPqV3VCItXeeM8kpIwBdWzno8BMwHDQDoamYZ1VYGjiD3iVdGvl8T4Q8r-eTh3WJNYfHbjuuABVWlArENjEnpQOAViF6a1VB1ixwhrdgt3VvzJ1AKW_gSDnAzsNWLeaDQPFSR5_JU7iushSs9myjtvvqrScflWeE12wa-jt3h-fZ2v_bO83CC1MyCf9BfBVVaaAHmykwj0GfZ" />
+                    <!-- Implementation -->
+                    <div
+                        class="absolute -top-3 -right-3 bg-on-background text-white px-md py-sm rounded-full shadow-lg flex items-center gap-sm border border-white/10 z-10">
+                        <div class="relative">
+                            <span class="material-symbols-outlined text-primary-fixed-dim">schedule</span>
+                            <span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full animate-ping"></span>
+                        </div>
+                        <div class="flex flex-col leading-none">
+                            <span class="font-label-caps text-[9px] text-surface-variant">EXPIRA EM</span>
+                            <span class="font-countdown-mono text-sm">22:15:08</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Style 05: Minimalist Banner -->
+        <section class="space-y-md">
+            <div class="flex items-center gap-xs">
+                <span class="w-2 h-6 bg-primary"></span>
+                <h2 class="font-headline-lg text-headline-lg">05. Minimalist Banner</h2>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm">
+                <!-- Implementation -->
+                <div
+                    class="w-full bg-on-secondary-fixed text-primary-fixed border-y border-primary/20 py-sm flex items-center justify-center gap-lg">
+                    <span class="font-label-caps text-label-caps tracking-widest hidden md:inline">OFERTA DE TEMPO
+                        LIMITADO</span>
+                    <div class="flex items-center gap-md">
+                        <span class="material-symbols-outlined">timer</span>
+                        <div class="flex items-baseline gap-xs">
+                            <span class="font-countdown-mono text-xl">18</span>
+                            <span class="font-body-sm text-[10px] opacity-70 uppercase">h</span>
+                            <span class="font-countdown-mono text-xl">42</span>
+                            <span class="font-body-sm text-[10px] opacity-70 uppercase">m</span>
+                            <span class="font-countdown-mono text-xl text-white">15</span>
+                            <span class="font-body-sm text-[10px] opacity-70 uppercase">s</span>
+                        </div>
+                    </div>
+                    <span class="font-label-caps text-label-caps tracking-widest hidden md:inline">FRETE GRÁTIS
+                        HOJE</span>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        // Micro-interaction: Countdown Timer Logic Simulation
+        function updateTimers() {
+            const countdownElements = document.querySelectorAll('.font-countdown-mono');
+
+            // This is a simple visual update to show activity
+            // In a real app, you would have actual target timestamps
+            setInterval(() => {
+                const now = new Date();
+                const seconds = now.getSeconds();
+                const displaySecs = (60 - seconds).toString().padStart(2, '0');
+
+                document.querySelectorAll('.countdown-pulse').forEach(el => {
+                    el.textContent = displaySecs;
+                });
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', updateTimers);
+    </script>
+</body>
+
+</html>
