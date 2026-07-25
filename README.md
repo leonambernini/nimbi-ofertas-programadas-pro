@@ -5,7 +5,7 @@ App Nuvemshop Enhanced Admin para criar **grupos de ofertas** com tabela de pre√
 - **Admin:** Next.js + [Nimbus](https://nimbus.nuvemshop.com.br/) + [Nexo](https://dev.nuvemshop.com.br/)
 - **API:** Next.js Route Handlers + Prisma
 - **DB / CDN:** Supabase (Postgres + Storage)
-- **Host:** Vercel (cron a cada 5 min)
+- **Host:** Vercel (cron di√°rio no Hobby; use Supabase/cron externo p/ intervalos menores)
 - **Assinatura:** [Billing nativo Nuvemshop](https://tiendanube.github.io/api-documentation/resources/billing)
 - **Vitrine:** [NubeSDK](https://dev.nuvemshop.com.br/en/docs/applications/nube-sdk/getting-started) (pasta `nube-sdk/`)
 
@@ -42,7 +42,7 @@ Guia: [docs/oauth-billing.md](./docs/oauth-billing.md)
 | Customer Redact | `{APP_URL}/api/v1/webhooks/redact/customers` |
 | Customers Data Request | `{APP_URL}/api/v1/webhooks/redact/customers/data-request` |
 
-Cron (Vercel): `CRON_SECRET` + rota `/api/cron/offers` (ver `vercel.json`).
+Cron (Vercel Hobby): 1x/dia (`0 3 * * *` UTC) + `CRON_SECRET` em `/api/cron/offers` (ver `vercel.json`).
 
 ## Scripts
 
