@@ -5,7 +5,7 @@
  * A Nuvemshop controla assinatura e período de testes automaticamente
  * na instalação do app. O app NÃO cria assinatura nem gerencia trial local.
  *
- * Fluxo do Ofertas Pro:
+ * Fluxo do Ofertas Programadas Pro:
  * 1. Install → registra webhooks + sync da subscription (já criada pela NS)
  * 2. Webhook `subscription/updated` → re-sync (sem polling)
  * 3. Gate de acesso usa o status sincronizado (`active` | `trial`)
@@ -71,7 +71,7 @@ async function partnerRequest<T>(
     headers: {
       Authorization: `Bearer ${env.nuvemshopClientSecret()}`,
       "Content-Type": "application/json",
-      "User-Agent": "Ofertas Pro (ofertaspro@nuvemshop.com)",
+      "User-Agent": "Ofertas Programadas Pro (ofertaspro@nuvemshop.com)",
     },
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });

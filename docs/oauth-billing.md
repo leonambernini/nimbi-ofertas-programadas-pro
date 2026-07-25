@@ -1,4 +1,4 @@
-# OAuth2 e Billing — Ofertas Pro
+# OAuth2 e Billing — Ofertas Programadas Pro
 
 Referências oficiais:
 - [Authentication](https://tiendanube.github.io/api-documentation/authentication)
@@ -48,7 +48,7 @@ Conforme suporte Nuvemshop:
 | `service_id` | `app_id` do aplicativo |
 | Business Unit | ID do parceiro — **não** entra nessa rota |
 
-### O que o Ofertas Pro faz
+### O que o Ofertas Programadas Pro faz
 
 1. **Install** → registra webhooks + `syncStoreSubscription` (lê o que a NS já criou)
 2. **Webhook** `subscription/updated` → re-sync

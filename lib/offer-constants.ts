@@ -55,7 +55,7 @@ export function normalizeBannerSlot(value: unknown): BannerSlot {
 export const FILL_MODES: PriceFillMode[] = ["percent", "fixed", "manual"];
 
 /**
- * Slots NubeSDK usados pelo Ofertas Pro.
+ * Slots NubeSDK usados pelo Ofertas Programadas Pro.
  * Fonte: https://dev.nuvemshop.com.br/en/docs/applications/nube-sdk/slots/storefront-slots
  *
  * - Banner: before_main_content, after_header, before_footer, seções home

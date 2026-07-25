@@ -16,7 +16,7 @@ type CustomersRedactPayload = {
  * URL Webhook Customers Redact (Partner Portal / LGPD).
  * Docs: https://tiendanube.github.io/api-documentation/resources/webhook#customersredact
  *
- * Selos Pro não armazena dados de clientes finais — responde 200 (ack).
+ * Ofertas Programadas Pro não armazena dados de clientes finais — responde 200 (ack).
  */
 export async function POST(request: Request) {
   const rawBody = await request.text();

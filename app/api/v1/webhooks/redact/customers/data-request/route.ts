@@ -19,7 +19,7 @@ type DataRequestPayload = {
  * URL Webhook Customers Data Request (Partner Portal / LGPD).
  * Docs: https://tiendanube.github.io/api-documentation/resources/webhook#customersdata_request
  *
- * Selos Pro não armazena dados de clientes finais — responde 200 (ack).
+ * Ofertas Programadas Pro não armazena dados de clientes finais — responde 200 (ack).
  * Se no futuro houver PII, enviar o relatório ao lojista da store_id.
  */
 export async function POST(request: Request) {

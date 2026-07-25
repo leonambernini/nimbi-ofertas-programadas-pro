@@ -17,7 +17,7 @@ export default async function InstallErrorPage({
       gap="3"
       padding="6"
     >
-      <Title as="h1">Selos Pro</Title>
+      <Title as="h1">Ofertas Programadas Pro</Title>
       <Text>
         Não foi possível concluir a instalação
         {reason ? ` (${reason})` : ""}. Tente novamente pelo Admin da Nuvemshop.

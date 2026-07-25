@@ -348,7 +348,7 @@ export type Dictionary = {
 };
 
 const pt: Dictionary = {
-  appName: "Ofertas Pro",
+  appName: "Ofertas Programadas Pro",
   connecting: "Conectando...",
   home: {
     createOffer: "+ Novo grupo de ofertas",
@@ -770,7 +770,7 @@ const pt: Dictionary = {
 
 const es: Dictionary = {
   ...pt,
-  appName: "Ofertas Pro",
+  appName: "Ofertas Programadas Pro",
   connecting: "Conectando...",
   home: {
     ...pt.home,

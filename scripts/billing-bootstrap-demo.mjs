@@ -135,12 +135,12 @@ async function main() {
     const partnerHeaders = {
       Authorization: `Bearer ${clientSecret}`,
       "Content-Type": "application/json",
-      "User-Agent": "Ofertas Pro billing-bootstrap (ofertaspro@nuvemshop.com)",
+      "User-Agent": "Ofertas Programadas Pro billing-bootstrap (ofertaspro@nuvemshop.com)",
     };
     const storeHeaders = {
       Authentication: `bearer ${accessToken}`,
       "Content-Type": "application/json; charset=utf-8",
-      "User-Agent": "Ofertas Pro billing-bootstrap (ofertaspro@nuvemshop.com)",
+      "User-Agent": "Ofertas Programadas Pro billing-bootstrap (ofertaspro@nuvemshop.com)",
     };
 
     // 1) Plano Partner-Action
@@ -155,7 +155,7 @@ async function main() {
           body: {
             code: amountCurrency,
             external_reference: `${planExternal}-${Date.now()}`,
-            description: "Ofertas Pro — plano mensal (demo bootstrap)",
+            description: "Ofertas Programadas Pro — plano mensal (demo bootstrap)",
           },
         },
       );
@@ -253,7 +253,7 @@ async function main() {
         body: {
           code: amountCurrency,
           external_reference: `${planExternal}-store-${version}`,
-          description: "Ofertas Pro store-scoped plan",
+          description: "Ofertas Programadas Pro store-scoped plan",
         },
       });
     }

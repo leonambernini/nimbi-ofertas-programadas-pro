@@ -1,4 +1,4 @@
-# Ofertas Pro — NubeSDK (storefront)
+# Ofertas Programadas Pro — NubeSDK (storefront)
 
 Bundle injetado na vitrine (tema compatível com NubeSDK).
 

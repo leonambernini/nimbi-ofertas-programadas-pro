@@ -1,4 +1,4 @@
-# Ofertas Pro
+# Ofertas Programadas Pro
 
 App Nuvemshop Enhanced Admin para criar **grupos de ofertas** com tabela de preços, ativação por cron, vitrine, banners e página dedicada.
 

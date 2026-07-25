@@ -3,7 +3,7 @@ import "@nimbus-ds/styles/dist/index.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Selos Pro",
+  title: "Ofertas Programadas Pro",
   description: "Selos e bandeiras animadas para produtos Nuvemshop",
 };
 

@@ -1,4 +1,4 @@
-# Ofertas Pro — Plano de Ação
+# Ofertas Programadas Pro — Plano de Ação
 
 App Enhanced Admin (Nimbus + Nexo) + API (Next.js) + Storefront (NubeSDK), multi-loja, PT-BR/ES, assinatura nativa Nuvemshop. Hospedagem: **Vercel** + **Supabase** (Postgres + Storage CDN).
 

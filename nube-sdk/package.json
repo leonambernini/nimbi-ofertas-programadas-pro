@@ -9,7 +9,7 @@
     "format": "biome check --write ./src",
     "lint": "biome check ./src"
   },
-  "author": "Ofertas Pro",
+  "author": "Ofertas Programadas Pro",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@tiendanube/nube-sdk-helper": "^0.2.0",
