@@ -2,6 +2,7 @@ import type { OfferGroup, OfferItem } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
   NuvemshopApiError,
+  listProducts,
   patchProductVariants,
 } from "@/lib/nuvemshop-client";
 
@@ -19,6 +20,30 @@ type VariantPricePatch = {
   id: number;
   promotional_price: string | null;
 };
+
+function moneyEq(a: number, b: number): boolean {
+  return Math.abs(a - b) < 0.005;
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Preço promocional a restaurar na Nuvemshop.
+ * Se o snapshot ficou igual ao preço da oferta (corrompido após apply),
+ * limpa o promo (null) para voltar ao preço cheio.
+ */
+function resolveRestorePromotionalPrice(item: PriceItemLike): string | null {
+  const original = toNullableNumber(item.originalPromotionalPrice);
+  const offer = toNullableNumber(item.offerPrice);
+
+  if (original == null) return null;
+  if (offer != null && moneyEq(original, offer)) return null;
+  return original.toFixed(2);
+}
 
 function groupByProduct(
   items: PriceItemLike[],
@@ -48,11 +73,75 @@ function toApplyGroups(items: PriceItemLike[]) {
 function toRestoreGroups(items: PriceItemLike[]) {
   return groupByProduct(items, (item) => ({
     id: item.variantId,
-    promotional_price:
-      item.originalPromotionalPrice == null
-        ? null
-        : Number(item.originalPromotionalPrice).toFixed(2),
+    promotional_price: resolveRestorePromotionalPrice(item),
   }));
+}
+
+/**
+ * Antes do 1º apply: lê o promo atual na NS e grava no item
+ * (garante snapshot correto para o restore).
+ */
+async function refreshOriginalPromosFromStore(params: {
+  storeId: string;
+  accessToken: string;
+  offerId: string;
+  items: PriceItemLike[];
+}): Promise<PriceItemLike[]> {
+  const productIds = [...new Set(params.items.map((i) => i.productId))];
+  if (!productIds.length) return params.items;
+
+  const products = await listProducts(
+    params.storeId,
+    params.accessToken,
+    { ids: productIds, per_page: Math.min(50, productIds.length) },
+  );
+
+  const promoByVariant = new Map<number, number | null>();
+  for (const product of products) {
+    for (const variant of product.variants ?? []) {
+      promoByVariant.set(
+        Number(variant.id),
+        toNullableNumber(variant.promotional_price),
+      );
+    }
+  }
+
+  const next = params.items.map((item) => {
+    if (!promoByVariant.has(item.variantId)) return item;
+    return {
+      ...item,
+      originalPromotionalPrice: promoByVariant.get(item.variantId) ?? null,
+    };
+  });
+
+  await Promise.all(
+    next.map((item) =>
+      prisma.offerItem.updateMany({
+        where: {
+          offerGroupId: params.offerId,
+          productId: item.productId,
+          variantId: item.variantId,
+        },
+        data: {
+          originalPromotionalPrice: toNullableNumber(
+            item.originalPromotionalPrice,
+          ),
+        },
+      }),
+    ),
+  );
+
+  console.info("[offer-prices] snapshot original promos from store", {
+    offerId: params.offerId,
+    count: next.length,
+    sample: next.slice(0, 3).map((i) => ({
+      variantId: i.variantId,
+      originalPromotionalPrice: i.originalPromotionalPrice,
+      offerPrice: i.offerPrice,
+    })),
+  });
+
+  return next;
 }
 
 async function sendVariantPatches(
@@ -165,7 +254,22 @@ export async function applyOfferPrices(params: {
     return { ok: false, errors: ["no_items"] };
   }
 
-  const groups = toApplyGroups(items);
+  /** Snapshot do promo atual na loja antes de sobrescrever. */
+  let itemsToApply = items;
+  if (!params.offer.pricesApplied) {
+    try {
+      itemsToApply = await refreshOriginalPromosFromStore({
+        storeId: params.storeId,
+        accessToken: params.accessToken,
+        offerId: params.offer.id,
+        items,
+      });
+    } catch (err) {
+      console.warn("[offer-prices] snapshot original promos failed", err);
+    }
+  }
+
+  const groups = toApplyGroups(itemsToApply);
   const errors = await sendVariantPatches(
     params.storeId,
     params.accessToken,
@@ -245,6 +349,14 @@ export async function restoreOfferPrices(params: {
   }
 
   const groups = toRestoreGroups(items);
+  console.info("[offer-prices] restore payload", {
+    offerId: params.offer.id,
+    sample: groups.slice(0, 2),
+    clearedAsNull: groups
+      .flatMap((g) => g.variants)
+      .filter((v) => v.promotional_price == null).length,
+  });
+
   const errors = await sendVariantPatches(
     params.storeId,
     params.accessToken,
@@ -270,6 +382,7 @@ export async function restoreOfferPrices(params: {
         productCount: groups.length,
         errors,
         subset: Boolean(params.items?.length),
+        force: Boolean(params.force),
         endpoint: "PATCH /products/{id}/variants",
         sample: groups.slice(0, 2),
       },

@@ -44,6 +44,26 @@ export type Dictionary = {
     toggleDisableBody: string;
     toggleDisableBodyPrices: string;
     pricesSyncWarning: string;
+    filters: {
+      title: string;
+      enabled: string;
+      enabledAll: string;
+      enabledActive: string;
+      enabledInactive: string;
+      name: string;
+      namePlaceholder: string;
+      date: string;
+      dateHelp: string;
+      status: string;
+      statusAll: string;
+      sortBy: string;
+      sortStatus: string;
+      sortEnabled: string;
+      sortStartsAt: string;
+      clear: string;
+      empty: string;
+      results: string;
+    };
   };
   form: {
     createTitle: string;
@@ -380,6 +400,26 @@ const pt: Dictionary = {
       "Os preços promocionais aplicados serão restaurados aos valores originais nos produtos da loja.",
     pricesSyncWarning:
       "Isso percorre os produtos do grupo e reajusta os preços na Nuvemshop quando necessário.",
+    filters: {
+      title: "Filtrar e ordenar",
+      enabled: "Ativo / Inativo",
+      enabledAll: "Todos",
+      enabledActive: "Ativo",
+      enabledInactive: "Inativo",
+      name: "Nome",
+      namePlaceholder: "Buscar por nome...",
+      date: "Data",
+      dateHelp: "Mostra ofertas cujo período inclui esta data",
+      status: "Status",
+      statusAll: "Todos",
+      sortBy: "Ordenar por",
+      sortStatus: "Status",
+      sortEnabled: "Ativo / Inativo",
+      sortStartsAt: "Data de início",
+      clear: "Limpar filtros",
+      empty: "Nenhum grupo encontrado com estes filtros.",
+      results: "{count} resultado(s)",
+    },
   },
   form: {
     createTitle: "Criar grupo de ofertas",
@@ -774,6 +814,26 @@ const es: Dictionary = {
       "Los precios promocionales aplicados se restaurarán a los valores originales en los productos de la tienda.",
     pricesSyncWarning:
       "Esto recorre los productos del grupo y reajusta los precios en Nuvemshop cuando sea necesario.",
+    filters: {
+      title: "Filtrar y ordenar",
+      enabled: "Activo / Inactivo",
+      enabledAll: "Todos",
+      enabledActive: "Activo",
+      enabledInactive: "Inactivo",
+      name: "Nombre",
+      namePlaceholder: "Buscar por nombre...",
+      date: "Fecha",
+      dateHelp: "Muestra ofertas cuyo período incluye esta fecha",
+      status: "Estado",
+      statusAll: "Todos",
+      sortBy: "Ordenar por",
+      sortStatus: "Estado",
+      sortEnabled: "Activo / Inactivo",
+      sortStartsAt: "Fecha de inicio",
+      clear: "Limpiar filtros",
+      empty: "Ningún grupo encontrado con estos filtros.",
+      results: "{count} resultado(s)",
+    },
   },
   form: {
     ...pt.form,

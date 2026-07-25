@@ -350,7 +350,15 @@ export function OfferForm({ mode, initial }: Props) {
           sku: variant.sku,
           imageUrl: variant.imageUrl ?? product.imageUrl,
           originalPrice,
-          originalPromotionalPrice: variant.promotionalPrice,
+          /**
+           * Nunca sobrescrever o snapshot com o promo atual da loja:
+           * depois do apply, o promo da NS já é o preço da oferta — isso
+           * quebraria o restore (restauraria o mesmo valor).
+           */
+          originalPromotionalPrice:
+            previous?.originalPromotionalPrice !== undefined
+              ? previous.originalPromotionalPrice
+              : variant.promotionalPrice,
           offerPrice: previous?.offerPrice ?? originalPrice,
         });
       }
