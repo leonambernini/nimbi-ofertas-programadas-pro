@@ -57,8 +57,44 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-export function listOffers(): Promise<ApiOfferGroup[]> {
-  return request<ApiOfferGroup[]>("/offers");
+export type ListOffersParams = {
+  q?: string;
+  enabled?: "all" | "active" | "inactive";
+  status?: string;
+  date?: string;
+  sortBy?: "status" | "enabled" | "startsAt";
+  page?: number;
+  pageSize?: number;
+};
+
+export type ListOffersResponse = {
+  offers: ApiOfferGroup[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export function listOffers(
+  params: ListOffersParams = {},
+): Promise<ListOffersResponse> {
+  const search = new URLSearchParams();
+  if (params.q?.trim()) search.set("q", params.q.trim());
+  if (params.enabled && params.enabled !== "all") {
+    search.set("enabled", params.enabled);
+  }
+  if (params.status && params.status !== "all") {
+    search.set("status", params.status);
+  }
+  if (params.date) search.set("date", params.date);
+  if (params.sortBy) search.set("sortBy", params.sortBy);
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+
+  const query = search.toString();
+  return request<ListOffersResponse>(
+    query ? `/offers?${query}` : "/offers",
+  );
 }
 
 export async function getOffer(id: string): Promise<ApiOfferGroup> {

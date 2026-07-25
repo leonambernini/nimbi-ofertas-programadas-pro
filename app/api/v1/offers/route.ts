@@ -1,3 +1,4 @@
+import type { OfferStatus, Prisma } from "@prisma/client";
 import { apiJson } from "@/lib/api-http";
 import { isAdminSession, requireAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -12,17 +13,86 @@ import {
   validateOfferPayload,
 } from "@/lib/offers";
 
+const PAGE_SIZE = 20;
+const STATUSES: OfferStatus[] = [
+  "draft",
+  "scheduled",
+  "active",
+  "ended",
+  "disabled",
+];
+
 export async function GET(request: Request) {
   const session = await requireAdminSession(request);
   if (!isAdminSession(session)) return session;
 
-  const offers = await prisma.offerGroup.findMany({
-    where: { storeId: session.storeId },
-    include: { items: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  const { searchParams } = new URL(request.url);
+  const q = (searchParams.get("q") ?? "").trim();
+  const enabledParam = searchParams.get("enabled"); // all|active|inactive
+  const statusParam = searchParams.get("status");
+  const dateParam = searchParams.get("date"); // YYYY-MM-DD
+  const sortBy = searchParams.get("sortBy") ?? "startsAt";
+  const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
+  const pageSize = Math.min(
+    50,
+    Math.max(1, Number(searchParams.get("pageSize") ?? PAGE_SIZE) || PAGE_SIZE),
+  );
 
-  return apiJson(request, offers.map(toApiOfferGroup));
+  const where: Prisma.OfferGroupWhereInput = {
+    storeId: session.storeId,
+  };
+
+  if (q) {
+    where.name = { contains: q, mode: "insensitive" };
+  }
+
+  if (enabledParam === "active") where.enabled = true;
+  if (enabledParam === "inactive") where.enabled = false;
+
+  if (statusParam && STATUSES.includes(statusParam as OfferStatus)) {
+    where.status = statusParam as OfferStatus;
+  }
+
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const dayStart = new Date(`${dateParam}T00:00:00`);
+    const dayEnd = new Date(`${dateParam}T23:59:59.999`);
+    if (!Number.isNaN(dayStart.getTime()) && !Number.isNaN(dayEnd.getTime())) {
+      where.startsAt = { lte: dayEnd };
+      where.endsAt = { gte: dayStart };
+    }
+  }
+
+  let orderBy: Prisma.OfferGroupOrderByWithRelationInput = {
+    startsAt: "desc",
+  };
+  if (sortBy === "status") orderBy = { status: "asc" };
+  else if (sortBy === "enabled") orderBy = { enabled: "desc" };
+  else if (sortBy === "startsAt") orderBy = { startsAt: "desc" };
+
+  const [total, offers] = await Promise.all([
+    prisma.offerGroup.count({ where }),
+    prisma.offerGroup.findMany({
+      where,
+      include: {
+        _count: { select: { items: true } },
+      },
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return apiJson(request, {
+    offers: offers.map((offer) =>
+      toApiOfferGroup({ ...offer, items: [] }),
+    ),
+    page,
+    pageSize,
+    total,
+    totalPages,
+  });
 }
 
 export async function POST(request: Request) {

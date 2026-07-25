@@ -69,6 +69,9 @@ export type Dictionary = {
       chipDate: string;
       chipStatus: string;
       chipSort: string;
+      prevPage: string;
+      nextPage: string;
+      pageOf: string;
     };
   };
   form: {
@@ -431,6 +434,9 @@ const pt: Dictionary = {
       chipDate: "Data: {value}",
       chipStatus: "Status: {value}",
       chipSort: "Ordenar: {value}",
+      prevPage: "Anterior",
+      nextPage: "Próxima",
+      pageOf: "Página {page} de {totalPages}",
     },
   },
   form: {
@@ -851,6 +857,9 @@ const es: Dictionary = {
       chipDate: "Fecha: {value}",
       chipStatus: "Estado: {value}",
       chipSort: "Ordenar: {value}",
+      prevPage: "Anterior",
+      nextPage: "Siguiente",
+      pageOf: "Página {page} de {totalPages}",
     },
   },
   form: {

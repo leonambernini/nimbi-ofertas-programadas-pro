@@ -33,7 +33,10 @@ import type {
   StorefrontOffer,
 } from "@/lib/types";
 
-type OfferWithItems = OfferGroup & { items: OfferItem[] };
+type OfferWithItems = OfferGroup & {
+  items: OfferItem[];
+  _count?: { items: number };
+};
 
 function toNumber(
   value: Prisma.Decimal | number | null | undefined,
@@ -138,7 +141,7 @@ export function toApiOfferGroup(group: OfferWithItems): ApiOfferGroup {
     theme: themeFromGroup(group),
     enabled: group.enabled,
     items: group.items.map(toApiOfferItem),
-    itemCount: group.items.length,
+    itemCount: group._count?.items ?? group.items.length,
     createdAt: group.createdAt.toISOString(),
     updatedAt: group.updatedAt.toISOString(),
   };

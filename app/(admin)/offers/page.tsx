@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -9,6 +9,7 @@ import {
   IconButton,
   Input,
   Modal,
+  Pagination,
   Spinner,
   Table,
   Tag,
@@ -42,20 +43,15 @@ import initialScreenImage from "./initial-screen.png";
 
 const BULLET_ICONS = [TagIcon, FireIcon, TiendanubeIcon];
 
-const STATUS_ORDER: Record<string, number> = {
-  active: 0,
-  scheduled: 1,
-  draft: 2,
-  ended: 3,
-  disabled: 4,
-};
-
 const DEFAULT_FILTERS: OffersListFilters = {
   enabled: "all",
   date: "",
   status: "all",
   sortBy: "startsAt",
 };
+
+const SEARCH_DEBOUNCE_MS = 400;
+const PAGE_SIZE = 20;
 
 function formatPeriod(startsAt: string, endsAt: string) {
   const fmt = (iso: string) =>
@@ -79,19 +75,6 @@ function statusAppearance(
   return "warning";
 }
 
-/** A data do filtro (YYYY-MM-DD) cai dentro do período da oferta? */
-function periodContainsDate(startsAt: string, endsAt: string, date: string) {
-  if (!date) return true;
-  const dayStart = new Date(`${date}T00:00:00`);
-  const dayEnd = new Date(`${date}T23:59:59.999`);
-  if (Number.isNaN(dayStart.getTime()) || Number.isNaN(dayEnd.getTime())) {
-    return true;
-  }
-  const start = new Date(startsAt);
-  const end = new Date(endsAt);
-  return start <= dayEnd && end >= dayStart;
-}
-
 type ConfirmState =
   | { type: "delete"; offer: ApiOfferGroup }
   | { type: "toggle"; offer: ApiOfferGroup; nextEnabled: boolean };
@@ -103,67 +86,78 @@ export default function OffersPage() {
   const nexo = getNexoClient();
 
   const [loading, setLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(false);
   const [offers, setOffers] = useState<ApiOfferGroup[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
   const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const [filterName, setFilterName] = useState("");
+  const [filterNameInput, setFilterNameInput] = useState("");
+  const [debouncedFilterName, setDebouncedFilterName] = useState("");
   const [filters, setFilters] = useState<OffersListFilters>(DEFAULT_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const hasQueryFilters =
+    debouncedFilterName.trim() !== "" ||
+    filters.enabled !== "all" ||
+    filters.date !== "" ||
+    filters.status !== "all";
 
   useEffect(() => {
     navigateHeaderRemove(nexo);
   }, [nexo]);
 
   useEffect(() => {
-    listOffers()
-      .then(setOffers)
-      .catch(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedFilterName(filterNameInput);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [filterNameInput]);
+
+  const loadOffers = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) setListLoading(true);
+      try {
+        const result = await listOffers({
+          q: debouncedFilterName,
+          enabled: filters.enabled,
+          status: filters.status,
+          date: filters.date || undefined,
+          sortBy: filters.sortBy,
+          page,
+          pageSize: PAGE_SIZE,
+        });
+        setOffers(result.offers);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+        if (result.page !== page && result.totalPages > 0) {
+          setPage(Math.min(page, result.totalPages));
+        }
+      } catch {
         addToast({
           id: "offers-load-error",
           type: "danger",
           text: dict.home.error,
         });
-      })
-      .finally(() => setLoading(false));
-  }, [addToast, dict.home.error]);
-
-  const filteredOffers = useMemo(() => {
-    const nameQuery = filterName.trim().toLowerCase();
-    const { enabled, date, status, sortBy } = filters;
-
-    const list = offers.filter((offer) => {
-      if (enabled === "active" && !offer.enabled) return false;
-      if (enabled === "inactive" && offer.enabled) return false;
-      if (nameQuery && !offer.name.toLowerCase().includes(nameQuery)) {
-        return false;
+      } finally {
+        setLoading(false);
+        setListLoading(false);
       }
-      if (date && !periodContainsDate(offer.startsAt, offer.endsAt, date)) {
-        return false;
-      }
-      if (status !== "all" && offer.status !== status) return false;
-      return true;
-    });
+    },
+    [addToast, debouncedFilterName, dict.home.error, filters, page],
+  );
 
-    list.sort((a, b) => {
-      if (sortBy === "enabled") {
-        if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
-        return a.name.localeCompare(b.name, "pt");
-      }
-      if (sortBy === "status") {
-        const sa = STATUS_ORDER[a.status] ?? 99;
-        const sb = STATUS_ORDER[b.status] ?? 99;
-        if (sa !== sb) return sa - sb;
-        return a.name.localeCompare(b.name, "pt");
-      }
-      const da = new Date(a.startsAt).getTime();
-      const db = new Date(b.startsAt).getTime();
-      if (da !== db) return db - da;
-      return a.name.localeCompare(b.name, "pt");
-    });
+  useEffect(() => {
+    void loadOffers();
+  }, [loadOffers]);
 
-    return list;
-  }, [offers, filterName, filters]);
+  const applyFilters = (next: OffersListFilters) => {
+    setFilters(next);
+    setPage(1);
+  };
 
   const enabledLabel = (value: EnabledFilter) => {
     if (value === "active") return dict.home.filters.enabledActive;
@@ -192,7 +186,10 @@ export default function OffersPage() {
         text: t(dict.home.filters.chipEnabled, {
           value: enabledLabel(filters.enabled),
         }),
-        clear: () => setFilters((prev) => ({ ...prev, enabled: "all" })),
+        clear: () => {
+          setFilters((prev) => ({ ...prev, enabled: "all" }));
+          setPage(1);
+        },
       });
     }
     if (filters.date) {
@@ -201,7 +198,10 @@ export default function OffersPage() {
         text: t(dict.home.filters.chipDate, {
           value: formatChipDate(filters.date),
         }),
-        clear: () => setFilters((prev) => ({ ...prev, date: "" })),
+        clear: () => {
+          setFilters((prev) => ({ ...prev, date: "" }));
+          setPage(1);
+        },
       });
     }
     if (filters.status !== "all") {
@@ -210,7 +210,10 @@ export default function OffersPage() {
         text: t(dict.home.filters.chipStatus, {
           value: dict.home.status[filters.status] ?? filters.status,
         }),
-        clear: () => setFilters((prev) => ({ ...prev, status: "all" })),
+        clear: () => {
+          setFilters((prev) => ({ ...prev, status: "all" }));
+          setPage(1);
+        },
       });
     }
     if (filters.sortBy !== "startsAt") {
@@ -219,7 +222,10 @@ export default function OffersPage() {
         text: t(dict.home.filters.chipSort, {
           value: sortLabel(filters.sortBy),
         }),
-        clear: () => setFilters((prev) => ({ ...prev, sortBy: "startsAt" })),
+        clear: () => {
+          setFilters((prev) => ({ ...prev, sortBy: "startsAt" }));
+          setPage(1);
+        },
       });
     }
 
@@ -257,6 +263,10 @@ export default function OffersPage() {
       setOffers((current) =>
         current.map((item) => (item.id === offer.id ? updated : item)),
       );
+      // Recarrega se o filtro de ativo/inativo puder esconder o item
+      if (filters.enabled !== "all") {
+        await loadOffers({ silent: true });
+      }
     } catch {
       setOffers(previous);
       addToast({
@@ -277,6 +287,7 @@ export default function OffersPage() {
         type: "success",
         text: dict.home.deleted,
       });
+      await loadOffers({ silent: true });
     } catch {
       setOffers(previous);
       addToast({
@@ -318,7 +329,8 @@ export default function OffersPage() {
     );
   }
 
-  const showOnboarding = offers.length === 0;
+  const showOnboarding =
+    !loading && total === 0 && !hasQueryFilters && filterNameInput.trim() === "";
 
   const confirmTitle =
     confirm?.type === "delete"
@@ -410,8 +422,8 @@ export default function OffersPage() {
                 <Box flex="1">
                   <Input.Search
                     placeholder={dict.home.filters.namePlaceholder}
-                    value={filterName}
-                    onChange={(e) => setFilterName(e.target.value)}
+                    value={filterNameInput}
+                    onChange={(e) => setFilterNameInput(e.target.value)}
                   />
                 </Box>
                 <Button
@@ -425,9 +437,10 @@ export default function OffersPage() {
               <Box display="flex" gap="2" alignItems="center" flexWrap="wrap">
                 <Text color="neutral-textLow">
                   {t(dict.home.filters.results, {
-                    count: filteredOffers.length,
+                    count: total,
                   })}
                 </Text>
+                {listLoading ? <Spinner size="small" /> : null}
                 {filterChips.map((chip) => (
                   <Chip
                     key={chip.key}
@@ -443,10 +456,10 @@ export default function OffersPage() {
               open={filtersOpen}
               value={filters}
               onClose={() => setFiltersOpen(false)}
-              onApply={setFilters}
+              onApply={applyFilters}
             />
 
-            {filteredOffers.length === 0 ? (
+            {offers.length === 0 ? (
               <Box padding="6" textAlign="center">
                 <Text>{dict.home.filters.empty}</Text>
               </Box>
@@ -474,7 +487,7 @@ export default function OffersPage() {
                   </Table.Row>
                 </Table.Head>
                 <Table.Body>
-                  {filteredOffers.map((offer) => {
+                  {offers.map((offer) => {
                     const displayTags = [
                       {
                         key: "banner",
@@ -561,6 +574,16 @@ export default function OffersPage() {
                 </Table.Body>
               </Table>
             )}
+
+            {totalPages > 1 ? (
+              <Box display="flex" justifyContent="center">
+                <Pagination
+                  activePage={page}
+                  pageCount={totalPages}
+                  onPageChange={(nextPage) => setPage(nextPage)}
+                />
+              </Box>
+            ) : null}
           </Box>
         )}
       </Page.Body>
