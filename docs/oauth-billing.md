@@ -73,7 +73,9 @@ NUVEMSHOP_SERVICE_ID=36829   # = app_id
 BILLING_PLAN_ID=45a6c062-4f47-4a45-a2d2-cb1252a416a6
 BILLING_PLAN_EXTERNAL_REF=ofertas-pro-mensal
 
-# Emergência: BILLING_ENFORCE=false
+# Gate de pagamento: true=ATIVA | false=DESATIVA
+# Alias: PAYMENT_VALIDATION=true|false
+BILLING_ENFORCE=false
 ```
 
 ### Loja demo / teste (404 SubscriptionConcept)

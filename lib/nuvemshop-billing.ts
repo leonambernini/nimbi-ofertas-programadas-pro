@@ -244,9 +244,6 @@ export function getAccessState(
   store: Pick<Store, "subscriptionStatus">,
 ): AccessState {
   if (!env.billingEnforced()) {
-    if (store.subscriptionStatus === "suspended") {
-      return { hasAccess: false, reason: "suspended" };
-    }
     return { hasAccess: true, reason: "bypass" };
   }
 

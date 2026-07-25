@@ -24,15 +24,17 @@ export const env = {
   nuvemshopBillingConceptCode: () =>
     process.env.NUVEMSHOP_BILLING_CONCEPT_CODE?.trim() || "app-cost",
   /**
-   * Gate de assinatura.
-   * - BILLING_ENFORCE=false → sempre desliga
-   * - BILLING_ENFORCE=true → sempre liga
-   * - sem var: desligado em development (plano sandbox NS não gerencia assinatura);
-   *   ligado em production
+   * Validações de pagamento / gate de assinatura.
+   * Aceita `BILLING_ENFORCE` ou alias `PAYMENT_VALIDATION`.
+   * - false → desliga (libera admin + storefront sem checar assinatura)
+   * - true → liga (bloqueia sem trial/active)
+   * - sem var: desligado em development; ligado em production
    */
   billingEnforced: () => {
-    if (process.env.BILLING_ENFORCE === "false") return false;
-    if (process.env.BILLING_ENFORCE === "true") return true;
+    const raw =
+      process.env.BILLING_ENFORCE ?? process.env.PAYMENT_VALIDATION;
+    if (raw === "false" || raw === "0") return false;
+    if (raw === "true" || raw === "1") return true;
     return process.env.NODE_ENV === "production";
   },
   billingPlanId: () => process.env.BILLING_PLAN_ID ?? "",
