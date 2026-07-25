@@ -3,22 +3,37 @@ import { prisma } from "@/lib/db";
 import { applyOfferPrices, restoreOfferPrices } from "@/lib/offer-prices";
 import { deriveStatus } from "@/lib/offers";
 
+/** Janela para reconciliar ofertas ended cujo flag pricesApplied se perdeu. */
+const RESTORE_GRACE_MS = 48 * 60 * 60 * 1000;
+
 /**
  * Cron de ativação/desativação de grupos de oferta.
  * - scheduled → active quando now >= startsAt
- * - active → ended quando now > endsAt
+ * - active → ended quando now >= endsAt
  * - aplica/restaura preços se autoApplyPrices
- * - página dedicada: desativada temporariamente
  */
 export async function runOffersCron(now = new Date()) {
+  const graceStart = new Date(now.getTime() - RESTORE_GRACE_MS);
+
   const offers = await prisma.offerGroup.findMany({
     where: {
-      enabled: true,
       OR: [
-        { status: { in: ["scheduled", "active"] } },
         {
+          enabled: true,
+          status: { in: ["scheduled", "active"] },
+        },
+        /** Preços ainda aplicados na loja. */
+        { pricesApplied: true },
+        /**
+         * Rede de segurança (48h): oferta já ended na janela recente
+         * com auto-apply — cobre o caso do flag pricesApplied ter sido
+         * limpo sem restaurar na Nuvemshop.
+         */
+        {
+          enabled: true,
+          autoApplyPrices: true,
           status: "ended",
-          pricesApplied: true,
+          endsAt: { lte: now, gte: graceStart },
         },
       ],
     },
@@ -35,7 +50,23 @@ export async function runOffersCron(now = new Date()) {
     applyOk: 0,
     restoreOk: 0,
     errors: [] as string[],
+    now: now.toISOString(),
   };
+
+  console.info("[cron] runOffersCron start", {
+    now: summary.now,
+    scanned: summary.scanned,
+    offers: offers.map((o) => ({
+      id: o.id,
+      name: o.name,
+      status: o.status,
+      enabled: o.enabled,
+      pricesApplied: o.pricesApplied,
+      autoApplyPrices: o.autoApplyPrices,
+      startsAt: o.startsAt.toISOString(),
+      endsAt: o.endsAt.toISOString(),
+    })),
+  });
 
   for (const offer of offers) {
     if (offer.store.uninstalledAt) continue;
@@ -49,6 +80,7 @@ export async function runOffersCron(now = new Date()) {
       continue;
     }
 
+    const previousStatus = offer.status;
     const nextStatus = deriveStatus({
       enabled: offer.enabled,
       startsAt: offer.startsAt,
@@ -56,7 +88,35 @@ export async function runOffersCron(now = new Date()) {
       now,
     });
 
-    if (offer.status !== nextStatus) {
+    const shouldBeLive = nextStatus === "active";
+    /**
+     * Restaura se:
+     * - flag pricesApplied ainda true, ou
+     * - estava active e a janela acabou (transição), ou
+     * - ended recente com auto-apply (grace de reconciliação)
+     */
+    const shouldRestore =
+      !shouldBeLive &&
+      offer.autoApplyPrices &&
+      offer.items.length > 0 &&
+      (offer.pricesApplied ||
+        previousStatus === "active" ||
+        (previousStatus === "ended" &&
+          offer.endsAt >= graceStart &&
+          offer.endsAt <= now));
+
+    console.info("[cron] offer evaluate", {
+      id: offer.id,
+      from: previousStatus,
+      to: nextStatus,
+      shouldBeLive,
+      shouldRestore,
+      pricesApplied: offer.pricesApplied,
+      endsAt: offer.endsAt.toISOString(),
+      now: now.toISOString(),
+    });
+
+    if (previousStatus !== nextStatus) {
       await prisma.offerGroup.update({
         where: { id: offer.id },
         data: { status: nextStatus },
@@ -67,7 +127,12 @@ export async function runOffersCron(now = new Date()) {
           offerGroupId: offer.id,
           action: nextStatus === "active" ? "activate" : "deactivate",
           success: true,
-          message: `${offer.status} → ${nextStatus}`,
+          message: `${previousStatus} → ${nextStatus}`,
+          details: {
+            now: now.toISOString(),
+            startsAt: offer.startsAt.toISOString(),
+            endsAt: offer.endsAt.toISOString(),
+          },
         },
       });
 
@@ -80,31 +145,38 @@ export async function runOffersCron(now = new Date()) {
     }
 
     try {
-      if (nextStatus === "active" && offer.autoApplyPrices && !offer.pricesApplied) {
+      if (shouldBeLive && offer.autoApplyPrices && !offer.pricesApplied) {
         const result = await applyOfferPrices({
           storeId: offer.storeId,
           accessToken,
-          offer,
+          offer: { ...offer, status: nextStatus },
         });
-        if (result.ok) summary.applyOk += 1;
-        else summary.errors.push(...result.errors.map((e) => `apply:${offer.id}:${e}`));
+        if (result.ok) {
+          summary.applyOk += 1;
+          offer.pricesApplied = true;
+        } else {
+          summary.errors.push(
+            ...result.errors.map((e) => `apply:${offer.id}:${e}`),
+          );
+        }
       }
 
-      if (
-        (nextStatus === "ended" || nextStatus === "disabled") &&
-        offer.pricesApplied
-      ) {
+      if (shouldRestore) {
         const result = await restoreOfferPrices({
           storeId: offer.storeId,
           accessToken,
-          offer,
+          offer: { ...offer, status: nextStatus },
+          force: true,
         });
-        if (result.ok) summary.restoreOk += 1;
-        else summary.errors.push(...result.errors.map((e) => `restore:${offer.id}:${e}`));
+        if (result.ok) {
+          summary.restoreOk += 1;
+          offer.pricesApplied = false;
+        } else {
+          summary.errors.push(
+            ...result.errors.map((e) => `restore:${offer.id}:${e}`),
+          );
+        }
       }
-
-      // Página extra desativada temporariamente — não sincroniza.
-
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       summary.errors.push(`${offer.id}:${message}`);
@@ -112,5 +184,6 @@ export async function runOffersCron(now = new Date()) {
     }
   }
 
+  console.info("[cron] runOffersCron done", summary);
   return summary;
 }

@@ -426,6 +426,7 @@ export function deriveStatus(params: {
   if (!params.enabled) return "disabled";
   const now = params.now ?? new Date();
   if (now < params.startsAt) return "scheduled";
-  if (now > params.endsAt) return "ended";
+  /** Inclusivo: no horário de término a oferta já encerra. */
+  if (now >= params.endsAt) return "ended";
   return "active";
 }

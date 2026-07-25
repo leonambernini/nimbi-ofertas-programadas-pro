@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { runOffersCron } from "@/lib/offer-cron";
 
 /**
- * Cron Vercel: ativa/desativa ofertas e aplica/restaura preços.
+ * Endpoint disparado por cron externo (ex.: cron-job.org).
+ * Ativa/desativa ofertas e aplica/restaura preços.
  * Protegido por Authorization: Bearer CRON_SECRET
  */
-export async function GET(request: Request) {
+async function handleCron(request: Request) {
   const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
 
@@ -27,4 +28,13 @@ export async function GET(request: Request) {
     console.error("[cron/offers]", err);
     return NextResponse.json({ error: "cron_failed" }, { status: 500 });
   }
+}
+
+export async function GET(request: Request) {
+  return handleCron(request);
+}
+
+/** Alguns agendadores usam POST por padrão. */
+export async function POST(request: Request) {
+  return handleCron(request);
 }
