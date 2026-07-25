@@ -5,22 +5,21 @@ import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
+  Chip,
   IconButton,
   Input,
-  Label,
   Modal,
-  Select,
   Spinner,
   Table,
   Tag,
   Text,
-  Title,
   Toggle,
   useToast,
 } from "@nimbus-ds/components";
 import {
   EditIcon,
   FireIcon,
+  SlidersIcon,
   TagIcon,
   TrashIcon,
   TiendanubeIcon,
@@ -33,6 +32,12 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { getNexoClient } from "@/lib/nexo";
 import { deriveStatus } from "@/lib/offers";
 import type { ApiOfferGroup } from "@/lib/types";
+import {
+  OffersFilterSideModal,
+  type EnabledFilter,
+  type OffersListFilters,
+  type SortKey,
+} from "./components/offers-filter-side-modal";
 import initialScreenImage from "./initial-screen.png";
 
 const BULLET_ICONS = [TagIcon, FireIcon, TiendanubeIcon];
@@ -45,9 +50,12 @@ const STATUS_ORDER: Record<string, number> = {
   disabled: 4,
 };
 
-type EnabledFilter = "all" | "active" | "inactive";
-type StatusFilter = "all" | ApiOfferGroup["status"];
-type SortKey = "status" | "enabled" | "startsAt";
+const DEFAULT_FILTERS: OffersListFilters = {
+  enabled: "all",
+  date: "",
+  status: "all",
+  sortBy: "startsAt",
+};
 
 function formatPeriod(startsAt: string, endsAt: string) {
   const fmt = (iso: string) =>
@@ -99,11 +107,9 @@ export default function OffersPage() {
   const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const [filterEnabled, setFilterEnabled] = useState<EnabledFilter>("all");
   const [filterName, setFilterName] = useState("");
-  const [filterDate, setFilterDate] = useState("");
-  const [filterStatus, setFilterStatus] = useState<StatusFilter>("all");
-  const [sortBy, setSortBy] = useState<SortKey>("startsAt");
+  const [filters, setFilters] = useState<OffersListFilters>(DEFAULT_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     navigateHeaderRemove(nexo);
@@ -124,20 +130,18 @@ export default function OffersPage() {
 
   const filteredOffers = useMemo(() => {
     const nameQuery = filterName.trim().toLowerCase();
+    const { enabled, date, status, sortBy } = filters;
 
     const list = offers.filter((offer) => {
-      if (filterEnabled === "active" && !offer.enabled) return false;
-      if (filterEnabled === "inactive" && offer.enabled) return false;
+      if (enabled === "active" && !offer.enabled) return false;
+      if (enabled === "inactive" && offer.enabled) return false;
       if (nameQuery && !offer.name.toLowerCase().includes(nameQuery)) {
         return false;
       }
-      if (
-        filterDate &&
-        !periodContainsDate(offer.startsAt, offer.endsAt, filterDate)
-      ) {
+      if (date && !periodContainsDate(offer.startsAt, offer.endsAt, date)) {
         return false;
       }
-      if (filterStatus !== "all" && offer.status !== filterStatus) return false;
+      if (status !== "all" && offer.status !== status) return false;
       return true;
     });
 
@@ -152,7 +156,6 @@ export default function OffersPage() {
         if (sa !== sb) return sa - sb;
         return a.name.localeCompare(b.name, "pt");
       }
-      // startsAt
       const da = new Date(a.startsAt).getTime();
       const db = new Date(b.startsAt).getTime();
       if (da !== db) return db - da;
@@ -160,28 +163,68 @@ export default function OffersPage() {
     });
 
     return list;
-  }, [
-    offers,
-    filterEnabled,
-    filterName,
-    filterDate,
-    filterStatus,
-    sortBy,
-  ]);
+  }, [offers, filterName, filters]);
 
-  const hasActiveFilters =
-    filterEnabled !== "all" ||
-    filterName.trim() !== "" ||
-    filterDate !== "" ||
-    filterStatus !== "all";
-
-  const clearFilters = () => {
-    setFilterEnabled("all");
-    setFilterName("");
-    setFilterDate("");
-    setFilterStatus("all");
-    setSortBy("startsAt");
+  const enabledLabel = (value: EnabledFilter) => {
+    if (value === "active") return dict.home.filters.enabledActive;
+    if (value === "inactive") return dict.home.filters.enabledInactive;
+    return dict.home.filters.enabledAll;
   };
+
+  const sortLabel = (value: SortKey) => {
+    if (value === "status") return dict.home.filters.sortStatus;
+    if (value === "enabled") return dict.home.filters.sortEnabled;
+    return dict.home.filters.sortStartsAt;
+  };
+
+  const formatChipDate = (date: string) => {
+    const [y, m, d] = date.split("-");
+    if (!y || !m || !d) return date;
+    return `${d}/${m}/${y}`;
+  };
+
+  const filterChips = useMemo(() => {
+    const chips: Array<{ key: string; text: string; clear: () => void }> = [];
+
+    if (filters.enabled !== "all") {
+      chips.push({
+        key: "enabled",
+        text: t(dict.home.filters.chipEnabled, {
+          value: enabledLabel(filters.enabled),
+        }),
+        clear: () => setFilters((prev) => ({ ...prev, enabled: "all" })),
+      });
+    }
+    if (filters.date) {
+      chips.push({
+        key: "date",
+        text: t(dict.home.filters.chipDate, {
+          value: formatChipDate(filters.date),
+        }),
+        clear: () => setFilters((prev) => ({ ...prev, date: "" })),
+      });
+    }
+    if (filters.status !== "all") {
+      chips.push({
+        key: "status",
+        text: t(dict.home.filters.chipStatus, {
+          value: dict.home.status[filters.status] ?? filters.status,
+        }),
+        clear: () => setFilters((prev) => ({ ...prev, status: "all" })),
+      });
+    }
+    if (filters.sortBy !== "startsAt") {
+      chips.push({
+        key: "sort",
+        text: t(dict.home.filters.chipSort, {
+          value: sortLabel(filters.sortBy),
+        }),
+        clear: () => setFilters((prev) => ({ ...prev, sortBy: "startsAt" })),
+      });
+    }
+
+    return chips;
+  }, [filters, dict.home.filters, dict.home.status]);
 
   const willTouchPrices = (state: ConfirmState) => {
     if (state.type === "delete") {
@@ -300,15 +343,6 @@ export default function OffersPage() {
 
   const showPricesNote = confirm ? willTouchPrices(confirm) : false;
 
-  const statusOptions: Array<{ value: StatusFilter; label: string }> = [
-    { value: "all", label: dict.home.filters.statusAll },
-    { value: "draft", label: dict.home.status.draft },
-    { value: "scheduled", label: dict.home.status.scheduled },
-    { value: "active", label: dict.home.status.active },
-    { value: "ended", label: dict.home.status.ended },
-    { value: "disabled", label: dict.home.status.disabled },
-  ];
-
   return (
     <Page>
       {!showOnboarding && (
@@ -371,128 +405,46 @@ export default function OffersPage() {
           </InitialScreen>
         ) : (
           <Box display="flex" flexDirection="column" gap="4">
-            <Box
-              display="flex"
-              flexDirection="column"
-              gap="3"
-              backgroundColor="neutral-background"
-              borderRadius="2"
-              borderWidth="1"
-              borderColor="neutral-interactive"
-              borderStyle="solid"
-              padding="4">
-              <Title as="h4">{dict.home.filters.title}</Title>
-              <Box
-                display="flex"
-                flexWrap="wrap"
-                gap="3"
-                alignItems="flex-end">
-                <Box flex="1" minWidth="140px">
-                  <Label htmlFor="filter-enabled">
-                    {dict.home.filters.enabled}
-                  </Label>
-                  <Select
-                    id="filter-enabled"
-                    name="filter-enabled"
-                    value={filterEnabled}
-                    onChange={(e) =>
-                      setFilterEnabled(e.target.value as EnabledFilter)
-                    }>
-                    <Select.Option
-                      label={dict.home.filters.enabledAll}
-                      value="all"
-                    />
-                    <Select.Option
-                      label={dict.home.filters.enabledActive}
-                      value="active"
-                    />
-                    <Select.Option
-                      label={dict.home.filters.enabledInactive}
-                      value="inactive"
-                    />
-                  </Select>
-                </Box>
-
-                <Box flex="1" minWidth="180px">
-                  <Label htmlFor="filter-name">{dict.home.filters.name}</Label>
-                  <Input
-                    id="filter-name"
-                    name="filter-name"
+            <Box display="flex" flexDirection="column" gap="2">
+              <Box display="flex" gap="1" alignItems="center">
+                <Box flex="1">
+                  <Input.Search
                     placeholder={dict.home.filters.namePlaceholder}
                     value={filterName}
                     onChange={(e) => setFilterName(e.target.value)}
                   />
                 </Box>
-
-                <Box flex="1" minWidth="160px">
-                  <Label htmlFor="filter-date">{dict.home.filters.date}</Label>
-                  <Input
-                    id="filter-date"
-                    name="filter-date"
-                    type="date"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                  />
-                  <Text fontSize="caption" color="neutral-textLow">
-                    {dict.home.filters.dateHelp}
-                  </Text>
-                </Box>
-
-                <Box flex="1" minWidth="140px">
-                  <Label htmlFor="filter-status">
-                    {dict.home.filters.status}
-                  </Label>
-                  <Select
-                    id="filter-status"
-                    name="filter-status"
-                    value={filterStatus}
-                    onChange={(e) =>
-                      setFilterStatus(e.target.value as StatusFilter)
-                    }>
-                    {statusOptions.map((option) => (
-                      <Select.Option
-                        key={option.value}
-                        label={option.label}
-                        value={option.value}
-                      />
-                    ))}
-                  </Select>
-                </Box>
-
-                <Box flex="1" minWidth="160px">
-                  <Label htmlFor="sort-by">{dict.home.filters.sortBy}</Label>
-                  <Select
-                    id="sort-by"
-                    name="sort-by"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortKey)}>
-                    <Select.Option
-                      label={dict.home.filters.sortStatus}
-                      value="status"
-                    />
-                    <Select.Option
-                      label={dict.home.filters.sortEnabled}
-                      value="enabled"
-                    />
-                    <Select.Option
-                      label={dict.home.filters.sortStartsAt}
-                      value="startsAt"
-                    />
-                  </Select>
-                </Box>
-
-                {hasActiveFilters ? (
-                  <Button appearance="neutral" onClick={clearFilters}>
-                    {dict.home.filters.clear}
-                  </Button>
-                ) : null}
+                <Button
+                  appearance="neutral"
+                  aria-label={dict.home.filters.openFilters}
+                  onClick={() => setFiltersOpen(true)}>
+                  <SlidersIcon />
+                </Button>
               </Box>
-              <Text color="neutral-textLow">
-                {t(dict.home.filters.results, {
-                  count: filteredOffers.length,
-                })}
-              </Text>
+
+              <Box display="flex" gap="2" alignItems="center" flexWrap="wrap">
+                <Text color="neutral-textLow">
+                  {t(dict.home.filters.results, {
+                    count: filteredOffers.length,
+                  })}
+                </Text>
+                {filterChips.map((chip) => (
+                  <Chip
+                    key={chip.key}
+                    text={chip.text}
+                    removable
+                    onClick={chip.clear}
+                  />
+                ))}
+              </Box>
             </Box>
+
+            <OffersFilterSideModal
+              open={filtersOpen}
+              value={filters}
+              onClose={() => setFiltersOpen(false)}
+              onApply={setFilters}
+            />
 
             {filteredOffers.length === 0 ? (
               <Box padding="6" textAlign="center">

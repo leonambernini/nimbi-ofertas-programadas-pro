@@ -61,8 +61,14 @@ export type Dictionary = {
       sortEnabled: string;
       sortStartsAt: string;
       clear: string;
+      apply: string;
       empty: string;
       results: string;
+      openFilters: string;
+      chipEnabled: string;
+      chipDate: string;
+      chipStatus: string;
+      chipSort: string;
     };
   };
   form: {
@@ -407,7 +413,7 @@ const pt: Dictionary = {
       enabledActive: "Ativo",
       enabledInactive: "Inativo",
       name: "Nome",
-      namePlaceholder: "Buscar por nome...",
+      namePlaceholder: "Buscar",
       date: "Data",
       dateHelp: "Mostra ofertas cujo período inclui esta data",
       status: "Status",
@@ -417,8 +423,14 @@ const pt: Dictionary = {
       sortEnabled: "Ativo / Inativo",
       sortStartsAt: "Data de início",
       clear: "Limpar filtros",
+      apply: "Aplicar filtros",
       empty: "Nenhum grupo encontrado com estes filtros.",
-      results: "{count} resultado(s)",
+      results: "{count} grupos",
+      openFilters: "Filtros",
+      chipEnabled: "Ativo: {value}",
+      chipDate: "Data: {value}",
+      chipStatus: "Status: {value}",
+      chipSort: "Ordenar: {value}",
     },
   },
   form: {
@@ -821,7 +833,7 @@ const es: Dictionary = {
       enabledActive: "Activo",
       enabledInactive: "Inactivo",
       name: "Nombre",
-      namePlaceholder: "Buscar por nombre...",
+      namePlaceholder: "Buscar",
       date: "Fecha",
       dateHelp: "Muestra ofertas cuyo período incluye esta fecha",
       status: "Estado",
@@ -831,8 +843,14 @@ const es: Dictionary = {
       sortEnabled: "Activo / Inactivo",
       sortStartsAt: "Fecha de inicio",
       clear: "Limpiar filtros",
+      apply: "Aplicar filtros",
       empty: "Ningún grupo encontrado con estos filtros.",
-      results: "{count} resultado(s)",
+      results: "{count} grupos",
+      openFilters: "Filtros",
+      chipEnabled: "Activo: {value}",
+      chipDate: "Fecha: {value}",
+      chipStatus: "Estado: {value}",
+      chipSort: "Ordenar: {value}",
     },
   },
   form: {
