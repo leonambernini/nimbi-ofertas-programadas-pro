@@ -516,6 +516,7 @@ export function OfferForm({ mode, initial }: Props) {
               productId: item.productId,
               variantId: item.variantId,
               offerPrice: item.offerPrice,
+              originalPrice: item.originalPrice,
               originalPromotionalPrice: item.originalPromotionalPrice,
             })),
           }
@@ -529,6 +530,7 @@ export function OfferForm({ mode, initial }: Props) {
           productId: item.productId,
           variantId: item.variantId,
           offerPrice: item.offerPrice,
+          originalPrice: item.originalPrice,
           originalPromotionalPrice: item.originalPromotionalPrice,
         })),
       },

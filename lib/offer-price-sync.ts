@@ -5,6 +5,7 @@ export type PriceSyncItem = {
   productId: number;
   variantId: number;
   offerPrice: number;
+  originalPrice: number;
   originalPromotionalPrice: number | null;
 };
 
@@ -19,6 +20,7 @@ type PreviousSnapshot = {
     productId: number;
     variantId: number;
     offerPrice: number;
+    originalPrice: number;
     originalPromotionalPrice: number | null;
   }>;
 };
@@ -66,6 +68,7 @@ export function snapshotFromOffer(
       productId: item.productId,
       variantId: item.variantId,
       offerPrice: toNumber(item.offerPrice),
+      originalPrice: toNumber(item.originalPrice),
       originalPromotionalPrice:
         item.originalPromotionalPrice == null
           ? null

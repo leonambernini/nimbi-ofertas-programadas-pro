@@ -74,6 +74,7 @@ export async function PUT(request: Request, context: RouteContext) {
         productId: item.productId,
         variantId: item.variantId,
         offerPrice: item.offerPrice,
+        originalPrice: item.originalPrice,
         originalPromotionalPrice: item.originalPromotionalPrice,
       })),
     },

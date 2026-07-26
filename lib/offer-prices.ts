@@ -13,11 +13,13 @@ type PriceItemLike = {
   variantId: number;
   /** Aceita number/string/Decimal do Prisma. */
   offerPrice: unknown;
+  originalPrice?: unknown;
   originalPromotionalPrice?: unknown;
 };
 
 type VariantPricePatch = {
   id: number;
+  price?: string;
   promotional_price: string | null;
 };
 
@@ -63,23 +65,45 @@ function groupByProduct(
   }));
 }
 
+/**
+ * Aplica preço da oferta:
+ * - Sem promo inicial → só define promotional_price (DE price POR offer)
+ * - Com promo inicial → price vira o promo antigo e promotional_price = offer
+ *   (DE 90 POR 45 quando antes era DE 100 POR 90)
+ */
 function toApplyGroups(items: PriceItemLike[]) {
-  return groupByProduct(items, (item) => ({
-    id: item.variantId,
-    promotional_price: Number(item.offerPrice).toFixed(2),
-  }));
+  return groupByProduct(items, (item) => {
+    const originalPromo = toNullableNumber(item.originalPromotionalPrice);
+    const patch: VariantPricePatch = {
+      id: item.variantId,
+      promotional_price: Number(item.offerPrice).toFixed(2),
+    };
+    if (originalPromo != null) {
+      patch.price = originalPromo.toFixed(2);
+    }
+    return patch;
+  });
 }
 
+/** Restaura price + promotional_price aos valores snapshot. */
 function toRestoreGroups(items: PriceItemLike[]) {
-  return groupByProduct(items, (item) => ({
-    id: item.variantId,
-    promotional_price: resolveRestorePromotionalPrice(item),
-  }));
+  return groupByProduct(items, (item) => {
+    const originalPrice = toNullableNumber(item.originalPrice);
+    const patch: VariantPricePatch = {
+      id: item.variantId,
+      promotional_price: resolveRestorePromotionalPrice(item),
+    };
+    if (originalPrice != null) {
+      patch.price = originalPrice.toFixed(2);
+    }
+    return patch;
+  });
 }
 
 /**
  * Antes do 1º apply: lê o promo atual na NS e grava no item
  * (garante snapshot correto para o restore).
+ * Não sobrescreve se a loja já estiver com o preço da oferta.
  */
 async function refreshOriginalPromosFromStore(params: {
   storeId: string;
@@ -97,20 +121,43 @@ async function refreshOriginalPromosFromStore(params: {
   );
 
   const promoByVariant = new Map<number, number | null>();
+  const priceByVariant = new Map<number, number | null>();
   for (const product of products) {
     for (const variant of product.variants ?? []) {
+      const variantId = Number(variant.id);
       promoByVariant.set(
-        Number(variant.id),
+        variantId,
         toNullableNumber(variant.promotional_price),
       );
+      priceByVariant.set(variantId, toNullableNumber(variant.price));
     }
   }
 
   const next = params.items.map((item) => {
     if (!promoByVariant.has(item.variantId)) return item;
+
+    const storePromo = promoByVariant.get(item.variantId) ?? null;
+    const offer = toNullableNumber(item.offerPrice);
+
+    /**
+     * Se a loja já tem o promo da oferta, o snapshot “atual” está
+     * corrompido — preserva o originalPromotionalPrice já gravado.
+     */
+    if (
+      storePromo != null &&
+      offer != null &&
+      moneyEq(storePromo, offer)
+    ) {
+      return item;
+    }
+
     return {
       ...item,
-      originalPromotionalPrice: promoByVariant.get(item.variantId) ?? null,
+      originalPromotionalPrice: storePromo,
+      originalPrice:
+        toNullableNumber(item.originalPrice) ??
+        priceByVariant.get(item.variantId) ??
+        item.originalPrice,
     };
   });
 
@@ -126,6 +173,9 @@ async function refreshOriginalPromosFromStore(params: {
           originalPromotionalPrice: toNullableNumber(
             item.originalPromotionalPrice,
           ),
+          ...(toNullableNumber(item.originalPrice) != null
+            ? { originalPrice: toNullableNumber(item.originalPrice)! }
+            : {}),
         },
       }),
     ),
@@ -136,6 +186,7 @@ async function refreshOriginalPromosFromStore(params: {
     count: next.length,
     sample: next.slice(0, 3).map((i) => ({
       variantId: i.variantId,
+      originalPrice: i.originalPrice,
       originalPromotionalPrice: i.originalPromotionalPrice,
       offerPrice: i.offerPrice,
     })),
@@ -254,7 +305,7 @@ export async function applyOfferPrices(params: {
     return { ok: false, errors: ["no_items"] };
   }
 
-  /** Snapshot do promo atual na loja antes de sobrescrever. */
+  /** Snapshot do promo atual na loja só no 1º apply (nunca com preços já aplicados). */
   let itemsToApply = items;
   if (!params.offer.pricesApplied) {
     try {

@@ -98,15 +98,22 @@ export function PriceConfigSideModal({
   const applyFillToTable = () => {
     const value = Number(fillValue);
     setDraftItems((current) =>
-      current.map((item) => ({
-        ...item,
-        offerPrice: computeOfferPrice(
-          item.originalPrice,
-          fillMode,
-          value,
-          item.offerPrice,
-        ),
-      })),
+      current.map((item) => {
+        /** Desconto sobre o preço efetivo (promo atual ou preço cheio). */
+        const basePrice =
+          item.originalPromotionalPrice != null
+            ? item.originalPromotionalPrice
+            : item.originalPrice;
+        return {
+          ...item,
+          offerPrice: computeOfferPrice(
+            basePrice,
+            fillMode,
+            value,
+            item.offerPrice,
+          ),
+        };
+      }),
     );
   };
 
@@ -114,7 +121,10 @@ export function PriceConfigSideModal({
     setDraftItems((current) =>
       current.map((item) => ({
         ...item,
-        offerPrice: item.originalPrice,
+        offerPrice:
+          item.originalPromotionalPrice != null
+            ? item.originalPromotionalPrice
+            : item.originalPrice,
       })),
     );
     setFillMode("manual");
@@ -235,13 +245,27 @@ export function PriceConfigSideModal({
                     </Table.Row>
                   </Table.Head>
                   <Table.Body>
-                    {group.variants.map((variant) => (
+                    {group.variants.map((variant) => {
+                      const basePrice =
+                        variant.originalPromotionalPrice != null
+                          ? variant.originalPromotionalPrice
+                          : variant.originalPrice;
+                      return (
                       <Table.Row
                         key={`${variant.productId}-${variant.variantId}`}>
                         <Table.Cell>{variant.variantName || "—"}</Table.Cell>
                         <Table.Cell>{variant.sku || "—"}</Table.Cell>
                         <Table.Cell>
-                          {variant.originalPrice.toFixed(2)}
+                          {basePrice.toFixed(2)}
+                          {variant.originalPromotionalPrice != null ? (
+                            <Text
+                              as="span"
+                              fontSize="caption"
+                              color="neutral-textLow"
+                            >
+                              {` (de ${variant.originalPrice.toFixed(2)})`}
+                            </Text>
+                          ) : null}
                         </Table.Cell>
                         <Table.Cell>
                           <Input
@@ -257,7 +281,8 @@ export function PriceConfigSideModal({
                           />
                         </Table.Cell>
                       </Table.Row>
-                    ))}
+                      );
+                    })}
                   </Table.Body>
                 </Table>
               </Box>

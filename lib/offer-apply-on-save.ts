@@ -103,7 +103,11 @@ export async function applyPricesForPlan(params: {
     offer: {
       ...params.offer,
       autoApplyPrices: true,
-      pricesApplied: false,
+      /**
+       * Mantém o flag real. Forçar `false` aqui re-snapshotava o promo
+       * já aplicado (preço da oferta) e quebrava o restore — sobretudo
+       * em produtos que originalmente não tinham promotional_price.
+       */
     },
     items: params.plan.applyItems,
     force: true,
@@ -135,6 +139,7 @@ export async function maybeApplyPricesOnSave(params: {
         productId: item.productId,
         variantId: item.variantId,
         offerPrice: Number(item.offerPrice),
+        originalPrice: Number(item.originalPrice),
         originalPromotionalPrice:
           item.originalPromotionalPrice == null
             ? null

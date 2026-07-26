@@ -158,6 +158,7 @@ export async function POST(request: Request) {
         productId: item.productId,
         variantId: item.variantId,
         offerPrice: item.offerPrice,
+        originalPrice: item.originalPrice,
         originalPromotionalPrice: item.originalPromotionalPrice,
       })),
     },
