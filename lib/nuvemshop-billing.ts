@@ -71,7 +71,7 @@ async function partnerRequest<T>(
     headers: {
       Authorization: `Bearer ${env.nuvemshopClientSecret()}`,
       "Content-Type": "application/json",
-      "User-Agent": "Ofertas Programadas Pro (ofertaspro@nuvemshop.com)",
+      "User-Agent": env.nuvemshopUserAgent(),
     },
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
@@ -114,6 +114,13 @@ export async function deletePlan(planId: string): Promise<void> {
   await partnerRequest(`/plans/${planId}`, { method: "DELETE" });
 }
 
+/** Billing de apps parceiros usa API 2025-03 (evitar fallback v1 → 404 duplicado). */
+const BILLING_API_VERSION = "2025-03" as const;
+
+/** Evita polling repetido de GET subscriptions (homologação: 404 em loop). */
+const SYNC_TTL_MS = 15 * 60 * 1000;
+const lastRemoteSyncAt = new Map<string, number>();
+
 /**
  * GET /concepts/{concept_code}/services/{service_id}/subscriptions
  * concept_code = `app-cost` (fixo)
@@ -132,6 +139,7 @@ export async function fetchSubscription(
     concept,
     serviceId,
     path,
+    version: BILLING_API_VERSION,
   });
 
   if (!concept || !serviceId) {
@@ -141,61 +149,44 @@ export async function fetchSubscription(
     return null;
   }
 
-  // Billing docs usam versão 2025-03 (não v1)
-  const versions = ["2025-03", "v1"] as const;
-
-  for (const version of versions) {
-    const url = `https://api.tiendanube.com/${version}/${storeId}${path}`;
-    console.info("[billing] fetchSubscription trying", { version, url });
-
-    try {
-      const subscription = await nuvemshopRequest<NuvemshopSubscription>(
-        storeId,
-        accessToken,
-        path,
-        { version },
-      );
-      console.info(
-        "[billing] fetchSubscription OK",
-        { version },
-        JSON.stringify(subscription, null, 2),
-      );
-      return subscription;
-    } catch (error) {
-      if (error instanceof NuvemshopApiError) {
-        // 404: tenta próxima versão da API
-        if (error.status === 404) {
-          console.warn("[billing] fetchSubscription 404", {
-            storeId,
-            version,
-          });
-          continue;
-        }
-        // 403 sem scope: comum em dev / token antigo — não quebra o admin
-        if (error.status === 403) {
-          console.warn(
-            "[billing] sem permissão read_subscriptions (403). Em localhost isso é esperado se o token não tiver o scope; o app segue com acesso liberado quando billing não é enforced.",
-            { storeId, version },
-          );
-          return null;
-        }
-        console.warn("[billing] fetchSubscription error", {
-          storeId,
-          version,
-          status: error.status,
-          body: error.responseBody.slice(0, 300),
-        });
-      } else {
-        console.error("[billing] fetchSubscription unexpected", error);
+  try {
+    const subscription = await nuvemshopRequest<NuvemshopSubscription>(
+      storeId,
+      accessToken,
+      path,
+      { version: BILLING_API_VERSION },
+    );
+    console.info(
+      "[billing] fetchSubscription OK",
+      JSON.stringify(subscription, null, 2),
+    );
+    return subscription;
+  } catch (error) {
+    if (error instanceof NuvemshopApiError) {
+      if (error.status === 404) {
+        console.warn(
+          "[billing] subscription not found (404) — NS ainda não criou assinatura para esta loja (ou app free). Não há retry em v1 para evitar ruído nos logs.",
+          { storeId },
+        );
+        return null;
       }
-      throw error;
+      if (error.status === 403) {
+        console.warn(
+          "[billing] sem permissão read_subscriptions (403).",
+          { storeId },
+        );
+        return null;
+      }
+      console.warn("[billing] fetchSubscription error", {
+        storeId,
+        status: error.status,
+        body: error.responseBody.slice(0, 300),
+      });
+    } else {
+      console.error("[billing] fetchSubscription unexpected", error);
     }
+    throw error;
   }
-
-  console.warn(
-    "[billing] subscription not found (404) — a Nuvemshop ainda não criou a assinatura para esta loja. Reinstale o app ou confirme no Partner Portal que o app está como pago/billing ativo.",
-  );
-  return null;
 }
 
 /**
@@ -222,7 +213,7 @@ export async function updateSubscription(
     storeId,
     accessToken,
     `/concepts/${concept}/services/${serviceId}/subscriptions`,
-    { method: "PATCH", body: input },
+    { method: "PATCH", body: input, version: BILLING_API_VERSION },
   );
 }
 
@@ -284,7 +275,7 @@ export async function provisionBillingOnInstall(
   }
 
   try {
-    await syncStoreSubscription(storeId, accessToken);
+    await syncStoreSubscription(storeId, accessToken, { force: true });
   } catch (error) {
     console.warn("[billing] sync on install failed", error);
   }
@@ -293,10 +284,12 @@ export async function provisionBillingOnInstall(
 /**
  * Busca a assinatura na API Nuvemshop e persiste cache local.
  * Preferir webhook `subscription/updated` para manter atualizado.
+ * `force` ignora o TTL (install / webhook).
  */
 export async function syncStoreSubscription(
   storeId: string,
   accessToken?: string,
+  options?: { force?: boolean },
 ): Promise<SubscriptionSyncResult> {
   const store = await prisma.store.findUnique({ where: { storeId } });
   if (!store || store.uninstalledAt) {
@@ -304,6 +297,24 @@ export async function syncStoreSubscription(
       status: "none",
       subscription: null,
       hasAccess: false,
+    };
+  }
+
+  const force = Boolean(options?.force);
+  const last = lastRemoteSyncAt.get(storeId) ?? 0;
+  const fresh = Date.now() - last < SYNC_TTL_MS;
+
+  if (!force && fresh) {
+    const hasAccess = hasActiveAccess(store);
+    console.info("[billing] syncStoreSubscription cache hit", {
+      storeId,
+      status: store.subscriptionStatus,
+      hasAccess,
+    });
+    return {
+      status: store.subscriptionStatus,
+      subscription: null,
+      hasAccess,
     };
   }
 
@@ -321,6 +332,8 @@ export async function syncStoreSubscription(
           : String(error);
     console.warn("[billing] fetch subscription failed", { storeId, message });
   }
+
+  lastRemoteSyncAt.set(storeId, Date.now());
 
   const status = mapSubscriptionStatus(subscription, store.subscriptionStatus);
   const hasAccess = hasActiveAccess({ subscriptionStatus: status });

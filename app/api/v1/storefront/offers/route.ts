@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAccessState } from "@/lib/nuvemshop-billing";
+import { reconcileStoreOfferPrices } from "@/lib/offer-reconcile";
 import { toStorefrontOffer } from "@/lib/offers";
 
 const CORS_HEADERS = {
@@ -51,13 +52,35 @@ export async function GET(request: Request) {
   const now = new Date();
   const productId = productIdParam ? Number(productIdParam) : null;
 
+  /**
+   * Se há campanhas com preços ainda aplicados fora da janela,
+   * restaura em background (rede de segurança se o cron atrasar).
+   */
+  const pendingRestore = await prisma.offerGroup.count({
+    where: {
+      storeId,
+      autoApplyPrices: true,
+      OR: [
+        { pricesApplied: true, endsAt: { lte: now } },
+        { pricesApplied: true, enabled: false },
+        { pricesApplied: true, status: { in: ["ended", "disabled"] } },
+      ],
+    },
+  });
+  if (pendingRestore > 0) {
+    void reconcileStoreOfferPrices({ storeId }).catch((err) =>
+      console.warn("[storefront] reconcile prices failed", err),
+    );
+  }
+
   const offers = await prisma.offerGroup.findMany({
     where: {
       storeId,
       enabled: true,
       status: "active",
       startsAt: { lte: now },
-      endsAt: { gte: now },
+      /** Inclusivo com deriveStatus: no horário de término a oferta já encerra. */
+      endsAt: { gt: now },
       ...(productId != null && !Number.isNaN(productId)
         ? { items: { some: { productId } } }
         : {}),

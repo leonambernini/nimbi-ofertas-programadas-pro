@@ -190,6 +190,7 @@ export function getMe(): Promise<{
   storeId: string;
   storeName: string | null;
   language: string;
+  country?: string | null;
   subscriptionStatus: string;
   nextExecution: string | null;
   hasAccess: boolean;

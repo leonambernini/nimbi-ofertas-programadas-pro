@@ -135,12 +135,12 @@ async function main() {
     const partnerHeaders = {
       Authorization: `Bearer ${clientSecret}`,
       "Content-Type": "application/json",
-      "User-Agent": "Ofertas Programadas Pro billing-bootstrap (ofertaspro@nuvemshop.com)",
+      "User-Agent": "Ofertas Programadas Pro billing-bootstrap (leonamb19+nimbi@gmail.com)",
     };
     const storeHeaders = {
       Authentication: `bearer ${accessToken}`,
       "Content-Type": "application/json; charset=utf-8",
-      "User-Agent": "Ofertas Programadas Pro billing-bootstrap (ofertaspro@nuvemshop.com)",
+      "User-Agent": "Ofertas Programadas Pro billing-bootstrap (leonamb19+nimbi@gmail.com)",
     };
 
     // 1) Plano Partner-Action

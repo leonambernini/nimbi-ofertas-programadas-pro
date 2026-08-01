@@ -25,15 +25,20 @@ export async function runOffersCron(now = new Date()) {
         /** Preços ainda aplicados na loja. */
         { pricesApplied: true },
         /**
-         * Rede de segurança (48h): oferta já ended na janela recente
+         * Rede de segurança (48h): oferta já ended/disabled na janela recente
          * com auto-apply — cobre o caso do flag pricesApplied ter sido
          * limpo sem restaurar na Nuvemshop.
          */
         {
-          enabled: true,
           autoApplyPrices: true,
-          status: "ended",
+          status: { in: ["ended", "disabled"] },
           endsAt: { lte: now, gte: graceStart },
+        },
+        /** Desativada manualmente com preços ainda na loja. */
+        {
+          enabled: false,
+          autoApplyPrices: true,
+          pricesApplied: true,
         },
       ],
     },

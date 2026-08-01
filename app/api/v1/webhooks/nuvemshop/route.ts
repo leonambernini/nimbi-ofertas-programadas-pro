@@ -83,7 +83,9 @@ async function safeSync(storeId: string) {
   const store = await prisma.store.findUnique({ where: { storeId } });
   if (!store || store.uninstalledAt) return;
   try {
-    await syncStoreSubscription(storeId, decryptToken(store.accessToken));
+    await syncStoreSubscription(storeId, decryptToken(store.accessToken), {
+      force: true,
+    });
   } catch (error) {
     console.warn("[webhooks] subscription sync failed", storeId, error);
   }

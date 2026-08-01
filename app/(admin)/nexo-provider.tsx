@@ -7,6 +7,7 @@ import {
   ACTION_NAVIGATE_SYNC,
   ErrorBoundary,
   connect,
+  getStoreInfo,
   iAmReady,
   syncPathname,
   type NavigateSyncResponse,
@@ -19,7 +20,9 @@ type Status = "connecting" | "connected" | "standalone";
 
 export function NexoProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>("connecting");
+  const [bootReady, setBootReady] = useState(false);
   const [language, setLanguage] = useState("pt");
+  const [country, setCountry] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const bootstrapped = useRef(false);
   const router = useRouter();
@@ -38,18 +41,48 @@ export function NexoProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
-  // Bootstrap uma vez: webhooks + me (acesso/idioma)
+  /**
+   * Bootstrap:
+   * - idioma/país → Nexo `getStoreInfo` (fonte correta no Enhanced Admin)
+   * - acesso/assinatura → `/me`
+   */
   useEffect(() => {
     if (status === "connecting" || bootstrapped.current) return;
     bootstrapped.current = true;
 
-    ensureWebhooks().catch(() => {});
-    getMe()
-      .then((me) => {
-        setLanguage(me.language);
-        setBlocked(Boolean(me.blocked));
+    const nexo = getNexoClient();
+
+    const localeFromNexo =
+      status === "connected"
+        ? getStoreInfo(nexo)
+            .then((info) => ({
+              language: info.language || "pt",
+              country: info.country || null,
+            }))
+            .catch(() => null)
+        : Promise.resolve(null);
+
+    const mePromise = getMe().catch(() => null);
+
+    Promise.all([
+      localeFromNexo,
+      mePromise,
+      ensureWebhooks().catch(() => {}),
+    ])
+      .then(([nexoLocale, me]) => {
+        if (nexoLocale) {
+          setLanguage(nexoLocale.language);
+          setCountry(nexoLocale.country);
+        } else if (me) {
+          /** Fallback: `/me` (standalone ou falha do getStoreInfo). */
+          setLanguage(me.language || "pt");
+          setCountry(me.country ?? null);
+        }
+        if (me) setBlocked(Boolean(me.blocked));
       })
-      .catch(() => {});
+      .finally(() => {
+        setBootReady(true);
+      });
   }, [status]);
 
   // Gate: se bloqueado, mantém em /subscription
@@ -83,7 +116,7 @@ export function NexoProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, [status, router]);
 
-  if (status === "connecting") {
+  if (status === "connecting" || !bootReady) {
     return (
       <Box
         height="100vh"
@@ -100,12 +133,37 @@ export function NexoProvider({ children }: { children: React.ReactNode }) {
   }
 
   const content = (
-    <LocaleProvider initialLocale={language}>
+    <LocaleProvider initialLocale={language} country={country}>
       <ToastProvider>{children}</ToastProvider>
     </LocaleProvider>
   );
 
   if (status === "standalone") {
+    /**
+     * Fora do iframe do Enhanced Admin o Nexo não emite JWT.
+     * Em produção, evita chamar a API e receber 401 missing_token.
+     */
+    if (process.env.NODE_ENV === "production") {
+      return (
+        <Box
+          height="100vh"
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          gap="2"
+          padding="6"
+        >
+          <Text fontSize="highlight" fontWeight="medium" textAlign="center">
+            Abra o Ofertas Programadas Pro pelo Admin da Nuvemshop
+          </Text>
+          <Text color="neutral-textLow" textAlign="center">
+            A sessão só funciona dentro do painel (Apps → Ofertas Programadas
+            Pro). Abrir a URL da Vercel direto não autentica.
+          </Text>
+        </Box>
+      );
+    }
     return content;
   }
 

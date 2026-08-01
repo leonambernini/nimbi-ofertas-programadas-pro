@@ -55,4 +55,21 @@ export const env = {
   nuvemshopApiRateLimitMs: () =>
     Number(process.env.NUVEMSHOP_API_RATE_LIMIT_MS ?? 200),
   cronSecret: () => process.env.CRON_SECRET ?? "",
+  /**
+   * User-Agent exigido pela API Nuvemshop: nome do app + e-mail válido do parceiro.
+   * Docs: Autenticação da API.
+   */
+  nuvemshopUserAgent: () => {
+    const name =
+      process.env.NUVEMSHOP_USER_AGENT_NAME?.trim() ||
+      "Ofertas Programadas Pro";
+    const email =
+      process.env.NUVEMSHOP_USER_AGENT_EMAIL?.trim() ||
+      "leonamb19+nimbi@gmail.com";
+    const appId =
+      process.env.NUVEMSHOP_CLIENT_ID?.trim() ||
+      process.env.NEXT_PUBLIC_NUVEMSHOP_CLIENT_ID?.trim() ||
+      "";
+    return appId ? `${name}/${appId} (${email})` : `${name} (${email})`;
+  },
 };

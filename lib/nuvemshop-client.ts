@@ -59,7 +59,7 @@ export async function nuvemshopRequest<T>(
     headers: {
       Authentication: `bearer ${accessToken}`,
       "Content-Type": "application/json; charset=utf-8",
-      "User-Agent": "Ofertas Programadas Pro (ofertaspro@nuvemshop.com)",
+      "User-Agent": env.nuvemshopUserAgent(),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });

@@ -1075,10 +1075,42 @@ const es: Dictionary = {
 
 export const dictionaries: Record<Locale, Dictionary> = { pt, es };
 
-export function resolveLocale(language?: string | null): Locale {
-  if (!language) return "pt";
-  const normalized = language.toLowerCase();
-  if (normalized.startsWith("es")) return "es";
+/**
+ * Resolve idioma do admin a partir de GET /store (`main_language` + `country`).
+ * Lojas AR/UY/CL/MX/CO/PE etc. caem em `es` quando o language não for pt.
+ */
+export function resolveLocale(
+  language?: string | null,
+  country?: string | null,
+): Locale {
+  if (language) {
+    const normalized = language.toLowerCase().replace("_", "-");
+    if (normalized.startsWith("es")) return "es";
+    if (normalized.startsWith("pt")) return "pt";
+  }
+
+  const cc = (country ?? "").toUpperCase();
+  const spanishCountries = new Set([
+    "AR",
+    "UY",
+    "CL",
+    "MX",
+    "CO",
+    "PE",
+    "EC",
+    "PY",
+    "BO",
+    "VE",
+    "CR",
+    "PA",
+    "GT",
+    "SV",
+    "HN",
+    "NI",
+    "DO",
+  ]);
+  if (spanishCountries.has(cc)) return "es";
+
   return "pt";
 }
 

@@ -245,15 +245,21 @@ export async function PATCH(request: Request, context: RouteContext) {
   let pricesOk = true;
   let pricesErrors: string[] = [];
 
+  /**
+   * Desativar / encerrar: sempre tenta restaurar se a oferta usa auto-apply
+   * (mesmo se o flag pricesApplied tiver sido limpo incorretamente).
+   */
   if (
     (status === "disabled" || status === "ended") &&
-    existing.pricesApplied
+    (existing.pricesApplied || existing.autoApplyPrices) &&
+    existing.items.length > 0
   ) {
     try {
       const result = await restoreOfferPrices({
         storeId: session.storeId,
         accessToken: session.accessToken,
         offer: existing,
+        force: true,
       });
       pricesRestored = true;
       pricesOk = result.ok;

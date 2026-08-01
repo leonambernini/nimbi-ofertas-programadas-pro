@@ -47,6 +47,7 @@ export async function GET(request: Request) {
     const result = await syncStoreSubscription(
       session.storeId,
       session.accessToken,
+      { force: true },
     );
 
     return apiJson(

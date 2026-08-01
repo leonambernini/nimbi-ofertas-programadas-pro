@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -24,12 +25,20 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({
   initialLocale = "pt",
+  country,
   children,
 }: {
   initialLocale?: string;
+  country?: string | null;
   children: ReactNode;
 }) {
-  const [locale, setLocale] = useState<Locale>(resolveLocale(initialLocale));
+  const [locale, setLocale] = useState<Locale>(() =>
+    resolveLocale(initialLocale, country),
+  );
+
+  useEffect(() => {
+    setLocale(resolveLocale(initialLocale, country));
+  }, [initialLocale, country]);
 
   const value = useMemo(
     () => ({
