@@ -345,8 +345,32 @@ export type Dictionary = {
     subtitle: string;
     back: string;
     empty: string;
+    emptyTitle: string;
+    emptyText: string;
+    emptyFilteredTitle: string;
+    emptyFilteredText: string;
+    emptyClearFilters: string;
+    emptyBackOffers: string;
+    searchPlaceholder: string;
+    openFilters: string;
+    filtersTitle: string;
+    applyFilters: string;
+    clearFilters: string;
+    results: string;
     filterAction: string;
     filterSuccess: string;
+    filterDate: string;
+    dateAll: string;
+    dateLast7: string;
+    dateLast15: string;
+    dateLast30: string;
+    dateCustom: string;
+    dateFrom: string;
+    dateTo: string;
+    dateCustomHelp: string;
+    chipDate: string;
+    chipAction: string;
+    chipResult: string;
     all: string;
     success: string;
     failed: string;
@@ -365,6 +389,30 @@ export type Dictionary = {
     retryFail: string;
     yes: string;
     no: string;
+    msgApplied: string;
+    msgReapplied: string;
+    msgRestored: string;
+    msgSkippedNotApplied: string;
+    msgSkippedNoItems: string;
+    msgStatusChange: string;
+    viewDetails: string;
+    detailTitle: string;
+    detailClose: string;
+    detailProducts: string;
+    detailVariants: string;
+    detailAttempts: string;
+    detailMaxAttempts: string;
+    detailHighestAttempt: string;
+    detailAttemptRow: string;
+    detailNoAttempts: string;
+    detailErrors: string;
+    detailNoErrors: string;
+    detailMeta: string;
+    detailEndpoint: string;
+    detailForce: string;
+    detailSource: string;
+    detailBug: string;
+    detailRaw: string;
   };
   products: {
     title: string;
@@ -793,9 +841,35 @@ const pt: Dictionary = {
     subtitle:
       "Histórico de aplicação e restauração de preços promocionais na Nuvemshop.",
     back: "Voltar",
-    empty: "Nenhum log encontrado ainda.",
+    empty: "Nenhum log encontrado com estes filtros.",
+    emptyTitle: "Nenhum log de preços ainda",
+    emptyText:
+      "Quando uma campanha aplicar ou restaurar preços na Nuvemshop, o histórico aparece aqui.",
+    emptyFilteredTitle: "Nenhum log encontrado",
+    emptyFilteredText:
+      "Não há registros com os filtros ou a busca atuais. Ajuste os critérios ou limpe os filtros.",
+    emptyClearFilters: "Limpar filtros",
+    emptyBackOffers: "Voltar para ofertas",
+    searchPlaceholder: "Buscar por nome da campanha",
+    openFilters: "Filtros",
+    filtersTitle: "Filtrar logs",
+    applyFilters: "Aplicar filtros",
+    clearFilters: "Limpar filtros",
+    results: "{count} registros",
     filterAction: "Ação",
     filterSuccess: "Resultado",
+    filterDate: "Período",
+    dateAll: "Todo o período",
+    dateLast7: "Últimos 7 dias",
+    dateLast15: "Últimos 15 dias",
+    dateLast30: "Últimos 30 dias",
+    dateCustom: "Data inicial / final",
+    dateFrom: "Data inicial",
+    dateTo: "Data final",
+    dateCustomHelp: "Mostra logs criados entre as datas selecionadas.",
+    chipDate: "Período: {value}",
+    chipAction: "Ação: {value}",
+    chipResult: "Resultado: {value}",
     all: "Todos",
     success: "Sucesso",
     failed: "Falhou",
@@ -804,16 +878,40 @@ const pt: Dictionary = {
     actionActivate: "Ativar oferta",
     actionDeactivate: "Desativar oferta",
     colWhen: "Quando",
-    colOffer: "Oferta",
+    colOffer: "Campanha",
     colAction: "Ação",
     colResult: "Resultado",
-    colMessage: "Mensagem",
+    colMessage: "Detalhe",
     colPricesApplied: "Preços na loja",
     retryRestore: "Tentar restaurar",
     retryOk: "Restore reenviado com sucesso.",
     retryFail: "Falha ao restaurar. Veja o novo log.",
     yes: "Sim",
     no: "Não",
+    msgApplied: "Preços aplicados",
+    msgReapplied: "Preços reaplicados",
+    msgRestored: "Preços restaurados",
+    msgSkippedNotApplied: "Ignorado: preços não estavam aplicados",
+    msgSkippedNoItems: "Ignorado: campanha sem produtos",
+    msgStatusChange: "{from} → {to}",
+    viewDetails: "Detalhes",
+    detailTitle: "Detalhe do log",
+    detailClose: "Fechar",
+    detailProducts: "Produtos",
+    detailVariants: "Variações",
+    detailAttempts: "Tentativas na API",
+    detailMaxAttempts: "Máximo por produto",
+    detailHighestAttempt: "Maior tentativa usada",
+    detailAttemptRow: "Produto {productId}: {count} tentativa(s)",
+    detailNoAttempts: "Nenhuma tentativa registrada neste log.",
+    detailErrors: "Erros",
+    detailNoErrors: "Nenhum erro retornado.",
+    detailMeta: "Metadados",
+    detailEndpoint: "Endpoint",
+    detailForce: "Forçado",
+    detailSource: "Origem",
+    detailBug: "Erro inesperado",
+    detailRaw: "JSON completo",
   },
   products: {
     title: "Selecionar produtos",
@@ -1127,9 +1225,35 @@ const es: Dictionary = {
     subtitle:
       "Historial de aplicación y restauración de precios promocionales en Nuvemshop.",
     back: "Volver",
-    empty: "Aún no hay logs.",
+    empty: "No se encontraron logs con estos filtros.",
+    emptyTitle: "Aún no hay logs de precios",
+    emptyText:
+      "Cuando una campaña aplique o restaure precios en Nuvemshop, el historial aparecerá aquí.",
+    emptyFilteredTitle: "No se encontraron logs",
+    emptyFilteredText:
+      "No hay registros con los filtros o la búsqueda actuales. Ajustá los criterios o limpiá los filtros.",
+    emptyClearFilters: "Limpiar filtros",
+    emptyBackOffers: "Volver a ofertas",
+    searchPlaceholder: "Buscar por nombre de la campaña",
+    openFilters: "Filtros",
+    filtersTitle: "Filtrar logs",
+    applyFilters: "Aplicar filtros",
+    clearFilters: "Limpiar filtros",
+    results: "{count} registros",
     filterAction: "Acción",
     filterSuccess: "Resultado",
+    filterDate: "Período",
+    dateAll: "Todo el período",
+    dateLast7: "Últimos 7 días",
+    dateLast15: "Últimos 15 días",
+    dateLast30: "Últimos 30 días",
+    dateCustom: "Fecha inicial / final",
+    dateFrom: "Fecha inicial",
+    dateTo: "Fecha final",
+    dateCustomHelp: "Muestra logs creados entre las fechas seleccionadas.",
+    chipDate: "Período: {value}",
+    chipAction: "Acción: {value}",
+    chipResult: "Resultado: {value}",
     all: "Todos",
     success: "Éxito",
     failed: "Falló",
@@ -1138,16 +1262,40 @@ const es: Dictionary = {
     actionActivate: "Activar oferta",
     actionDeactivate: "Desactivar oferta",
     colWhen: "Cuándo",
-    colOffer: "Oferta",
+    colOffer: "Campaña",
     colAction: "Acción",
     colResult: "Resultado",
-    colMessage: "Mensaje",
+    colMessage: "Detalle",
     colPricesApplied: "Precios en la tienda",
     retryRestore: "Intentar restaurar",
     retryOk: "Restore reenviado con éxito.",
     retryFail: "Error al restaurar. Revisá el nuevo log.",
     yes: "Sí",
     no: "No",
+    msgApplied: "Precios aplicados",
+    msgReapplied: "Precios reaplicados",
+    msgRestored: "Precios restaurados",
+    msgSkippedNotApplied: "Omitido: los precios no estaban aplicados",
+    msgSkippedNoItems: "Omitido: campaña sin productos",
+    msgStatusChange: "{from} → {to}",
+    viewDetails: "Detalles",
+    detailTitle: "Detalle del log",
+    detailClose: "Cerrar",
+    detailProducts: "Productos",
+    detailVariants: "Variaciones",
+    detailAttempts: "Intentos en la API",
+    detailMaxAttempts: "Máximo por producto",
+    detailHighestAttempt: "Mayor intento usado",
+    detailAttemptRow: "Producto {productId}: {count} intento(s)",
+    detailNoAttempts: "Ningún intento registrado en este log.",
+    detailErrors: "Errores",
+    detailNoErrors: "Ningún error devuelto.",
+    detailMeta: "Metadatos",
+    detailEndpoint: "Endpoint",
+    detailForce: "Forzado",
+    detailSource: "Origen",
+    detailBug: "Error inesperado",
+    detailRaw: "JSON completo",
   },
   products: {
     title: "Seleccionar productos",

@@ -7,9 +7,9 @@ const reconciling = new Set<string>();
 
 /**
  * Restaura preços de ofertas que já não deveriam estar ativas
- * (ended / disabled / fora da janela) mas ainda têm preços na loja.
+ * mas ainda têm `pricesApplied=true`.
  *
- * Usado como rede de segurança além do cron (admin `/me`, storefront).
+ * Rede de segurança leve: nunca reprocessa oferta já restaurada.
  */
 export async function reconcileStoreOfferPrices(params: {
   storeId: string;
@@ -42,16 +42,8 @@ export async function reconcileStoreOfferPrices(params: {
       where: {
         storeId: params.storeId,
         autoApplyPrices: true,
+        pricesApplied: true,
         items: { some: {} },
-        OR: [
-          { pricesApplied: true },
-          {
-            enabled: true,
-            status: { in: ["active", "ended"] },
-            endsAt: { lte: now },
-          },
-          { enabled: false, status: "disabled" },
-        ],
       },
       include: { items: true },
     });
@@ -69,14 +61,6 @@ export async function reconcileStoreOfferPrices(params: {
       const shouldBeLive = nextStatus === "active";
       if (shouldBeLive) continue;
 
-      const needsRestore =
-        offer.pricesApplied ||
-        offer.status === "active" ||
-        nextStatus === "ended" ||
-        nextStatus === "disabled";
-
-      if (!needsRestore || !offer.items.length) continue;
-
       if (offer.status !== nextStatus) {
         await prisma.offerGroup.update({
           where: { id: offer.id },
@@ -89,13 +73,25 @@ export async function reconcileStoreOfferPrices(params: {
           storeId: params.storeId,
           accessToken,
           offer: { ...offer, status: nextStatus },
-          force: true,
         });
         if (result.ok) restored += 1;
         else errors.push(...result.errors.map((e) => `${offer.id}:${e}`));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         errors.push(`${offer.id}:${message}`);
+        await prisma.offerCronLog.create({
+          data: {
+            offerGroupId: offer.id,
+            action: "restore",
+            success: false,
+            message: message.slice(0, 1000),
+            details: {
+              bug: true,
+              source: "reconcile",
+              now: now.toISOString(),
+            },
+          },
+        });
       }
     }
 

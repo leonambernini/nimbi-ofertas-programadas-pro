@@ -235,6 +235,9 @@ export function listPriceSyncLogs(params?: {
   action?: "all" | "apply" | "restore" | "activate" | "deactivate";
   success?: "all" | "true" | "false";
   offerId?: string;
+  q?: string;
+  from?: string;
+  to?: string;
 }): Promise<ListPriceSyncLogsResponse> {
   const search = new URLSearchParams();
   if (params?.page) search.set("page", String(params.page));
@@ -246,6 +249,9 @@ export function listPriceSyncLogs(params?: {
     search.set("success", params.success);
   }
   if (params?.offerId) search.set("offerId", params.offerId);
+  if (params?.q?.trim()) search.set("q", params.q.trim());
+  if (params?.from) search.set("from", params.from);
+  if (params?.to) search.set("to", params.to);
   const query = search.toString();
   return request(query ? `/price-sync-logs?${query}` : "/price-sync-logs");
 }

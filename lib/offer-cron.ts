@@ -3,18 +3,16 @@ import { prisma } from "@/lib/db";
 import { applyOfferPrices, restoreOfferPrices } from "@/lib/offer-prices";
 import { deriveStatus } from "@/lib/offers";
 
-/** Janela para reconciliar ofertas ended cujo flag pricesApplied se perdeu. */
-const RESTORE_GRACE_MS = 48 * 60 * 60 * 1000;
-
 /**
  * Cron de ativação/desativação de grupos de oferta.
  * - scheduled → active quando now >= startsAt
  * - active → ended quando now >= endsAt
  * - aplica/restaura preços se autoApplyPrices
+ *
+ * Importante: restore só roda quando `pricesApplied=true`.
+ * Não há loop de “grace” reprocessando ofertas ended a cada minuto.
  */
 export async function runOffersCron(now = new Date()) {
-  const graceStart = new Date(now.getTime() - RESTORE_GRACE_MS);
-
   const offers = await prisma.offerGroup.findMany({
     where: {
       OR: [
@@ -22,24 +20,8 @@ export async function runOffersCron(now = new Date()) {
           enabled: true,
           status: { in: ["scheduled", "active"] },
         },
-        /** Preços ainda aplicados na loja. */
+        /** Preços ainda aplicados na loja — precisa restaurar. */
         { pricesApplied: true },
-        /**
-         * Rede de segurança (48h): oferta já ended/disabled na janela recente
-         * com auto-apply — cobre o caso do flag pricesApplied ter sido
-         * limpo sem restaurar na Nuvemshop.
-         */
-        {
-          autoApplyPrices: true,
-          status: { in: ["ended", "disabled"] },
-          endsAt: { lte: now, gte: graceStart },
-        },
-        /** Desativada manualmente com preços ainda na loja. */
-        {
-          enabled: false,
-          autoApplyPrices: true,
-          pricesApplied: true,
-        },
       ],
     },
     include: {
@@ -61,16 +43,6 @@ export async function runOffersCron(now = new Date()) {
   console.info("[cron] runOffersCron start", {
     now: summary.now,
     scanned: summary.scanned,
-    offers: offers.map((o) => ({
-      id: o.id,
-      name: o.name,
-      status: o.status,
-      enabled: o.enabled,
-      pricesApplied: o.pricesApplied,
-      autoApplyPrices: o.autoApplyPrices,
-      startsAt: o.startsAt.toISOString(),
-      endsAt: o.endsAt.toISOString(),
-    })),
   });
 
   for (const offer of offers) {
@@ -94,32 +66,12 @@ export async function runOffersCron(now = new Date()) {
     });
 
     const shouldBeLive = nextStatus === "active";
-    /**
-     * Restaura se:
-     * - flag pricesApplied ainda true, ou
-     * - estava active e a janela acabou (transição), ou
-     * - ended recente com auto-apply (grace de reconciliação)
-     */
+    /** Só restaura se ainda houver preços promocionais marcados como aplicados. */
     const shouldRestore =
       !shouldBeLive &&
       offer.autoApplyPrices &&
-      offer.items.length > 0 &&
-      (offer.pricesApplied ||
-        previousStatus === "active" ||
-        (previousStatus === "ended" &&
-          offer.endsAt >= graceStart &&
-          offer.endsAt <= now));
-
-    console.info("[cron] offer evaluate", {
-      id: offer.id,
-      from: previousStatus,
-      to: nextStatus,
-      shouldBeLive,
-      shouldRestore,
-      pricesApplied: offer.pricesApplied,
-      endsAt: offer.endsAt.toISOString(),
-      now: now.toISOString(),
-    });
+      offer.pricesApplied &&
+      offer.items.length > 0;
 
     if (previousStatus !== nextStatus) {
       await prisma.offerGroup.update({
@@ -171,7 +123,6 @@ export async function runOffersCron(now = new Date()) {
           storeId: offer.storeId,
           accessToken,
           offer: { ...offer, status: nextStatus },
-          force: true,
         });
         if (result.ok) {
           summary.restoreOk += 1;
@@ -186,6 +137,21 @@ export async function runOffersCron(now = new Date()) {
       const message = err instanceof Error ? err.message : String(err);
       summary.errors.push(`${offer.id}:${message}`);
       console.error("[cron] offer failed", offer.id, err);
+
+      await prisma.offerCronLog.create({
+        data: {
+          offerGroupId: offer.id,
+          action: shouldRestore ? "restore" : "apply",
+          success: false,
+          message: message.slice(0, 1000),
+          details: {
+            bug: true,
+            now: now.toISOString(),
+            pricesApplied: offer.pricesApplied,
+            status: nextStatus,
+          },
+        },
+      });
     }
   }
 

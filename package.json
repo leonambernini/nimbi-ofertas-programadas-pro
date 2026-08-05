@@ -15,7 +15,8 @@
     "sdk:dev": "npm run dev --prefix nube-sdk",
     "sdk:build": "npm run build --prefix nube-sdk",
     "billing:bootstrap-demo": "node --env-file=.env scripts/billing-bootstrap-demo.mjs",
-    "token:decrypt": "node --env-file=.env scripts/decrypt-store-token.mjs"
+    "token:decrypt": "node --env-file=.env scripts/decrypt-store-token.mjs",
+    "logs:clear": "node --env-file=.env scripts/clear-price-sync-logs.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

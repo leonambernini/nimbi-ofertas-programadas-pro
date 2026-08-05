@@ -461,32 +461,13 @@ export async function restoreOfferPrices(params: {
     console.info("[offer-prices] skip restore — prices not applied", {
       offerId: params.offer.id,
     });
-    await prisma.offerCronLog.create({
-      data: {
-        offerGroupId: params.offer.id,
-        action: "restore",
-        success: true,
-        message: "skipped_prices_not_applied",
-        details: {
-          skipped: true,
-          reason: "prices_not_applied",
-          pricesApplied: params.offer.pricesApplied,
-          force: Boolean(params.force),
-        },
-      },
-    });
+    // Sem log: não houve chamada à API nem erro.
     return { ok: true, errors: [] };
   }
 
   if (!items.length) {
-    await prisma.offerCronLog.create({
-      data: {
-        offerGroupId: params.offer.id,
-        action: "restore",
-        success: true,
-        message: "skipped_no_items",
-        details: { skipped: true, reason: "no_items" },
-      },
+    console.info("[offer-prices] skip restore — no items", {
+      offerId: params.offer.id,
     });
     return { ok: true, errors: [] };
   }
