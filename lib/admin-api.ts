@@ -202,3 +202,56 @@ export function getMe(): Promise<{
 export function ensureWebhooks(): Promise<{ ok?: boolean }> {
   return request("/webhooks/ensure", { method: "POST" });
 }
+
+export type PriceSyncLog = {
+  id: string;
+  action: "apply" | "restore" | "activate" | "deactivate";
+  success: boolean;
+  message: string | null;
+  details: unknown;
+  createdAt: string;
+  offer: {
+    id: string;
+    name: string;
+    status: string;
+    enabled: boolean;
+    pricesApplied: boolean;
+    autoApplyPrices: boolean;
+    endsAt: string;
+  };
+};
+
+export type ListPriceSyncLogsResponse = {
+  logs: PriceSyncLog[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export function listPriceSyncLogs(params?: {
+  page?: number;
+  pageSize?: number;
+  action?: "all" | "apply" | "restore" | "activate" | "deactivate";
+  success?: "all" | "true" | "false";
+  offerId?: string;
+}): Promise<ListPriceSyncLogsResponse> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set("page", String(params.page));
+  if (params?.pageSize) search.set("pageSize", String(params.pageSize));
+  if (params?.action && params.action !== "all") {
+    search.set("action", params.action);
+  }
+  if (params?.success && params.success !== "all") {
+    search.set("success", params.success);
+  }
+  if (params?.offerId) search.set("offerId", params.offerId);
+  const query = search.toString();
+  return request(query ? `/price-sync-logs?${query}` : "/price-sync-logs");
+}
+
+export function retryRestoreOfferPrices(
+  offerId: string,
+): Promise<{ ok: boolean; errors: string[]; pricesApplied: boolean }> {
+  return request(`/offers/${offerId}/restore-prices`, { method: "POST" });
+}

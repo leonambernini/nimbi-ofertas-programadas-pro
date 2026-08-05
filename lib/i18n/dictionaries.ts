@@ -6,6 +6,7 @@ export type Dictionary = {
   home: {
     createOffer: string;
     subscription: string;
+    priceLogs: string;
     emptyTitle: string;
     emptyDescription: string;
     initialSubtitle: string;
@@ -339,6 +340,32 @@ export type Dictionary = {
     goToSubscription: string;
     trialActiveDescription: string;
   };
+  priceLogs: {
+    title: string;
+    subtitle: string;
+    back: string;
+    empty: string;
+    filterAction: string;
+    filterSuccess: string;
+    all: string;
+    success: string;
+    failed: string;
+    actionApply: string;
+    actionRestore: string;
+    actionActivate: string;
+    actionDeactivate: string;
+    colWhen: string;
+    colOffer: string;
+    colAction: string;
+    colResult: string;
+    colMessage: string;
+    colPricesApplied: string;
+    retryRestore: string;
+    retryOk: string;
+    retryFail: string;
+    yes: string;
+    no: string;
+  };
   products: {
     title: string;
     apply: string;
@@ -353,6 +380,7 @@ const pt: Dictionary = {
   home: {
     createOffer: "+ Novo grupo de ofertas",
     subscription: "Assinatura",
+    priceLogs: "Logs de preços",
     emptyTitle: "Nenhuma oferta ainda",
     emptyDescription:
       "Crie seu primeiro grupo de ofertas com preços, datas e vitrine.",
@@ -760,6 +788,33 @@ const pt: Dictionary = {
     trialActiveDescription:
       "Você está no período de testes. A data da primeira cobrança aparece em “Próximo pagamento”.",
   },
+  priceLogs: {
+    title: "Logs de sincronização de preços",
+    subtitle:
+      "Histórico de aplicação e restauração de preços promocionais na Nuvemshop.",
+    back: "Voltar",
+    empty: "Nenhum log encontrado ainda.",
+    filterAction: "Ação",
+    filterSuccess: "Resultado",
+    all: "Todos",
+    success: "Sucesso",
+    failed: "Falhou",
+    actionApply: "Aplicar preços",
+    actionRestore: "Restaurar preços",
+    actionActivate: "Ativar oferta",
+    actionDeactivate: "Desativar oferta",
+    colWhen: "Quando",
+    colOffer: "Oferta",
+    colAction: "Ação",
+    colResult: "Resultado",
+    colMessage: "Mensagem",
+    colPricesApplied: "Preços na loja",
+    retryRestore: "Tentar restaurar",
+    retryOk: "Restore reenviado com sucesso.",
+    retryFail: "Falha ao restaurar. Veja o novo log.",
+    yes: "Sim",
+    no: "Não",
+  },
   products: {
     title: "Selecionar produtos",
     apply: "Aplicar seleção",
@@ -776,6 +831,7 @@ const es: Dictionary = {
     ...pt.home,
     createOffer: "+ Nuevo grupo de ofertas",
     subscription: "Suscripción",
+    priceLogs: "Logs de precios",
     emptyTitle: "Aún no hay ofertas",
     emptyDescription:
       "Creá tu primer grupo de ofertas con precios, fechas y vitrina.",
@@ -1064,6 +1120,34 @@ const es: Dictionary = {
     trial: "Prueba gratis",
     suspended: "Suspendida",
     goToSubscription: "Ver planes",
+  },
+  priceLogs: {
+    ...pt.priceLogs,
+    title: "Logs de sincronización de precios",
+    subtitle:
+      "Historial de aplicación y restauración de precios promocionales en Nuvemshop.",
+    back: "Volver",
+    empty: "Aún no hay logs.",
+    filterAction: "Acción",
+    filterSuccess: "Resultado",
+    all: "Todos",
+    success: "Éxito",
+    failed: "Falló",
+    actionApply: "Aplicar precios",
+    actionRestore: "Restaurar precios",
+    actionActivate: "Activar oferta",
+    actionDeactivate: "Desactivar oferta",
+    colWhen: "Cuándo",
+    colOffer: "Oferta",
+    colAction: "Acción",
+    colResult: "Resultado",
+    colMessage: "Mensaje",
+    colPricesApplied: "Precios en la tienda",
+    retryRestore: "Intentar restaurar",
+    retryOk: "Restore reenviado con éxito.",
+    retryFail: "Error al restaurar. Revisá el nuevo log.",
+    yes: "Sí",
+    no: "No",
   },
   products: {
     title: "Seleccionar productos",

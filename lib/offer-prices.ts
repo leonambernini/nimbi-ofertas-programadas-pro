@@ -195,6 +195,65 @@ async function refreshOriginalPromosFromStore(params: {
   return next;
 }
 
+const PATCH_MAX_ATTEMPTS = 3;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryablePatchError(err: unknown): boolean {
+  if (err instanceof NuvemshopApiError) {
+    return err.status === 429 || err.status >= 500;
+  }
+  return true; // rede / timeout
+}
+
+async function patchProductVariantsWithRetry(
+  storeId: string,
+  accessToken: string,
+  productId: number,
+  variants: VariantPricePatch[],
+  action: "apply" | "restore",
+): Promise<{ response: unknown; attempts: number }> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= PATCH_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await patchProductVariants(
+        storeId,
+        accessToken,
+        productId,
+        variants,
+      );
+      if (attempt > 1) {
+        console.info(`[offer-prices] ${action} product ok after retry`, {
+          storeId,
+          productId,
+          attempt,
+        });
+      }
+      return { response, attempts: attempt };
+    } catch (err) {
+      lastError = err;
+      const retryable = isRetryablePatchError(err);
+      console.warn(`[offer-prices] ${action} product attempt failed`, {
+        storeId,
+        productId,
+        attempt,
+        retryable,
+        message:
+          err instanceof NuvemshopApiError
+            ? `${err.status}: ${err.responseBody.slice(0, 200)}`
+            : err instanceof Error
+              ? err.message
+              : String(err),
+      });
+      if (!retryable || attempt === PATCH_MAX_ATTEMPTS) break;
+      await sleep(400 * attempt);
+    }
+  }
+  throw lastError;
+}
+
 async function sendVariantPatches(
   storeId: string,
   accessToken: string,
@@ -202,11 +261,13 @@ async function sendVariantPatches(
   action: "apply" | "restore",
 ) {
   const errors: string[] = [];
+  const attemptsByProduct: Record<string, number> = {};
 
   console.info(`[offer-prices] ${action} start`, {
     storeId,
     productCount: groups.length,
     variantCount: groups.reduce((sum, g) => sum + g.variants.length, 0),
+    maxAttempts: PATCH_MAX_ATTEMPTS,
   });
 
   for (const group of groups) {
@@ -217,21 +278,25 @@ async function sendVariantPatches(
         variants: group.variants,
       });
 
-      const response = await patchProductVariants(
+      const { response, attempts } = await patchProductVariantsWithRetry(
         storeId,
         accessToken,
         group.productId,
         group.variants,
+        action,
       );
+      attemptsByProduct[String(group.productId)] = attempts;
 
       console.info(`[offer-prices] ${action} product ok`, {
         storeId,
         productId: group.productId,
+        attempts,
         responsePreview: Array.isArray(response)
           ? response.slice(0, 2)
           : response,
       });
     } catch (err) {
+      attemptsByProduct[String(group.productId)] = PATCH_MAX_ATTEMPTS;
       const message =
         err instanceof NuvemshopApiError
           ? `${err.status}: ${err.responseBody}`
@@ -244,6 +309,7 @@ async function sendVariantPatches(
         productId: group.productId,
         variants: group.variants,
         message,
+        attempts: PATCH_MAX_ATTEMPTS,
       });
     }
   }
@@ -253,9 +319,10 @@ async function sendVariantPatches(
     ok: errors.length === 0,
     errorCount: errors.length,
     errors,
+    attemptsByProduct,
   });
 
-  return errors;
+  return { errors, attemptsByProduct };
 }
 
 export async function applyOfferPrices(params: {
@@ -321,7 +388,7 @@ export async function applyOfferPrices(params: {
   }
 
   const groups = toApplyGroups(itemsToApply);
-  const errors = await sendVariantPatches(
+  const { errors, attemptsByProduct } = await sendVariantPatches(
     params.storeId,
     params.accessToken,
     groups,
@@ -349,6 +416,8 @@ export async function applyOfferPrices(params: {
         itemCount: items.length,
         productCount: groups.length,
         errors,
+        attemptsByProduct,
+        maxAttempts: PATCH_MAX_ATTEMPTS,
         force: Boolean(params.force),
         subset: Boolean(params.items?.length),
         endpoint: "PATCH /products/{id}/variants",
@@ -392,10 +461,33 @@ export async function restoreOfferPrices(params: {
     console.info("[offer-prices] skip restore — prices not applied", {
       offerId: params.offer.id,
     });
+    await prisma.offerCronLog.create({
+      data: {
+        offerGroupId: params.offer.id,
+        action: "restore",
+        success: true,
+        message: "skipped_prices_not_applied",
+        details: {
+          skipped: true,
+          reason: "prices_not_applied",
+          pricesApplied: params.offer.pricesApplied,
+          force: Boolean(params.force),
+        },
+      },
+    });
     return { ok: true, errors: [] };
   }
 
   if (!items.length) {
+    await prisma.offerCronLog.create({
+      data: {
+        offerGroupId: params.offer.id,
+        action: "restore",
+        success: true,
+        message: "skipped_no_items",
+        details: { skipped: true, reason: "no_items" },
+      },
+    });
     return { ok: true, errors: [] };
   }
 
@@ -408,7 +500,7 @@ export async function restoreOfferPrices(params: {
       .filter((v) => v.promotional_price == null).length,
   });
 
-  const errors = await sendVariantPatches(
+  const { errors, attemptsByProduct } = await sendVariantPatches(
     params.storeId,
     params.accessToken,
     groups,
@@ -432,6 +524,8 @@ export async function restoreOfferPrices(params: {
         itemCount: items.length,
         productCount: groups.length,
         errors,
+        attemptsByProduct,
+        maxAttempts: PATCH_MAX_ATTEMPTS,
         subset: Boolean(params.items?.length),
         force: Boolean(params.force),
         endpoint: "PATCH /products/{id}/variants",

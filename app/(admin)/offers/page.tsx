@@ -364,6 +364,11 @@ export default function OffersPage() {
             <Box display="flex" gap="2">
               <Button
                 appearance="neutral"
+                onClick={() => router.push("/price-logs")}>
+                {dict.home.priceLogs}
+              </Button>
+              <Button
+                appearance="neutral"
                 onClick={() => router.push("/subscription")}>
                 {dict.home.subscription}
               </Button>
