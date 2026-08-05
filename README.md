@@ -8,7 +8,7 @@ App Nuvemshop Enhanced Admin para criar **grupos de ofertas** com tabela de pre�
 - **Host:** Vercel  
 - **Cron:** externo ([cron-job.org](https://cron-job.org)) → `GET /api/cron/offers`
 - **Assinatura:** [Billing nativo Nuvemshop](https://tiendanube.github.io/api-documentation/resources/billing)
-- **Vitrine:** [NubeSDK](https://dev.nuvemshop.com.br/en/docs/applications/nube-sdk/getting-started) (pasta `nube-sdk/`)
+- **Vitrine:** [NubeSDK](https://dev.nuvemshop.com.br/en/docs/applications/nube-sdk/getting-started) (`nube-sdk/`) + fallback JS puro para temas antigos (`storefront-legacy/`)
 
 Idiomas: **PT-BR** e **ES**. Multi-loja via OAuth2.
 
@@ -28,7 +28,7 @@ Ver [PLAN.md](./PLAN.md).
 
 - `write_products` — aplicar/restaurar preços promocionais
 - `write_content` — página dedicada (`/pages`)
-- `write_scripts` — NubeSDK
+- `write_scripts` — NubeSDK + storefront-legacy
 - `read_products` — implícito com write
 
 ### OAuth2 + Billing Nuvemshop
@@ -64,7 +64,9 @@ A lógica fica em `lib/offer-cron.ts` — o provedor só dispara o HTTP.
 | `npm run build` | Build Vercel |
 | `npm run db:push` | Sync schema Prisma → Postgres |
 | `npm run sdk:dev` | Dev do NubeSDK |
-| `npm run sdk:build` | Build do bundle storefront |
+| `npm run sdk:build` | Build do bundle NubeSDK |
+| `npm run legacy:dev` | Watch + serve legacy em `:3903` |
+| `npm run legacy:build` | Bundle DOM → `public/storefront/ofertas-legacy.min.js` |
 
 ## Rotas principais
 
@@ -77,8 +79,23 @@ A lógica fica em `lib/offer-cron.ts` — o provedor só dispara o HTTP.
 | `/api/v1/offers` | CRUD |
 | `/api/v1/products` | Proxy produtos (+ variants) |
 | `/api/v1/categories` | Proxy categorias |
-| `/api/v1/storefront/offers` | Público p/ NubeSDK |
+| `/api/v1/storefront/offers` | Público p/ NubeSDK e legacy |
+| `/storefront/ofertas-legacy.min.js` | Script DOM p/ temas sem NubeSDK |
 | `/api/cron/offers` | Ativação/desativação + preços |
+
+### Storefront legacy (temas antigos)
+
+Ver [storefront-legacy/README.md](./storefront-legacy/README.md).
+
+### Comandos de produção
+
+Guia completo (URLs, `sdk:build`, `legacy:build`, cron, Partner Portal):  
+**[docs/comandos-producao.md](./docs/comandos-producao.md)**
+
+```bash
+OFERTAS_API_BASE=https://nimbi-ofertas-programadas-pro.vercel.app npm run sdk:build
+OFERTAS_API_BASE=https://nimbi-ofertas-programadas-pro.vercel.app npm run legacy:build
+```
 
 ## Slots NubeSDK usados
 

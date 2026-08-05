@@ -22,7 +22,7 @@ export async function OPTIONS() {
 }
 
 /**
- * Endpoint público para o NubeSDK buscar ofertas ativas da loja.
+ * Endpoint público para NubeSDK e storefront-legacy buscarem ofertas ativas.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
