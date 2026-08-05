@@ -15,6 +15,7 @@
  * Business Unit (parceiro) NÃO entra nessa rota.
  */
 import { SubscriptionStatus, type Store } from "@prisma/client";
+import { isBillingDemoStore } from "@/lib/billing-demo-stores";
 import { decryptToken } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -46,6 +47,7 @@ export type AccessReason =
   | "active"
   | "trial"
   | "bypass"
+  | "demo"
   | "suspended"
   | "no_subscription"
   | "cancelled"
@@ -54,6 +56,11 @@ export type AccessReason =
 export type AccessState = {
   hasAccess: boolean;
   reason: AccessReason;
+};
+
+type AccessStore = {
+  storeId?: string;
+  subscriptionStatus: SubscriptionStatus;
 };
 
 async function partnerRequest<T>(
@@ -171,10 +178,9 @@ export async function fetchSubscription(
         return null;
       }
       if (error.status === 403) {
-        console.warn(
-          "[billing] sem permissão read_subscriptions (403).",
-          { storeId },
-        );
+        console.warn("[billing] sem permissão read_subscriptions (403).", {
+          storeId,
+        });
         return null;
       }
       console.warn("[billing] fetchSubscription error", {
@@ -231,9 +237,11 @@ export function mapSubscriptionStatus(
   return "active";
 }
 
-export function getAccessState(
-  store: Pick<Store, "subscriptionStatus">,
-): AccessState {
+export function getAccessState(store: AccessStore): AccessState {
+  if (store.storeId && isBillingDemoStore(store.storeId)) {
+    return { hasAccess: true, reason: "demo" };
+  }
+
   if (!env.billingEnforced()) {
     return { hasAccess: true, reason: "bypass" };
   }
@@ -254,9 +262,7 @@ export function getAccessState(
   }
 }
 
-export function hasActiveAccess(
-  store: Pick<Store, "subscriptionStatus">,
-): boolean {
+export function hasActiveAccess(store: AccessStore): boolean {
   return getAccessState(store).hasAccess;
 }
 
@@ -300,6 +306,17 @@ export async function syncStoreSubscription(
     };
   }
 
+  if (isBillingDemoStore(storeId)) {
+    console.info("[billing] demo store whitelist — skip sync/validation", {
+      storeId,
+    });
+    return {
+      status: store.subscriptionStatus,
+      subscription: null,
+      hasAccess: true,
+    };
+  }
+
   const force = Boolean(options?.force);
   const last = lastRemoteSyncAt.get(storeId) ?? 0;
   const fresh = Date.now() - last < SYNC_TTL_MS;
@@ -336,7 +353,7 @@ export async function syncStoreSubscription(
   lastRemoteSyncAt.set(storeId, Date.now());
 
   const status = mapSubscriptionStatus(subscription, store.subscriptionStatus);
-  const hasAccess = hasActiveAccess({ subscriptionStatus: status });
+  const hasAccess = hasActiveAccess({ storeId, subscriptionStatus: status });
 
   console.info("[billing] syncStoreSubscription result", {
     storeId,

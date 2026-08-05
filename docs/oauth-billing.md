@@ -75,7 +75,7 @@ BILLING_PLAN_EXTERNAL_REF=ofertas-pro-mensal
 
 # Gate de pagamento: true=ATIVA | false=DESATIVA
 # Alias: PAYMENT_VALIDATION=true|false
-BILLING_ENFORCE=false
+BILLING_ENFORCE=true
 ```
 
 ### Loja demo / teste (404 SubscriptionConcept)
