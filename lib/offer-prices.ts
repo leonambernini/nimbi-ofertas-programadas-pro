@@ -20,7 +20,11 @@ type PriceItemLike = {
 type VariantPricePatch = {
   id: number;
   price?: string;
-  promotional_price: string | null;
+  /**
+   * Na API Nuvemshop, `null` no PATCH é ignorado e NÃO limpa o promo.
+   * Para remover, enviar string vazia `""` (confirmado em produção).
+   */
+  promotional_price: string;
 };
 
 function moneyEq(a: number, b: number): boolean {
@@ -36,14 +40,16 @@ function toNullableNumber(value: unknown): number | null {
 /**
  * Preço promocional a restaurar na Nuvemshop.
  * Se o snapshot ficou igual ao preço da oferta (corrompido após apply),
- * limpa o promo (null) para voltar ao preço cheio.
+ * limpa o promo (`""`) para voltar ao preço cheio.
+ *
+ * Importante: PATCH com `null` é ignorado pela API — só `""` remove.
  */
-function resolveRestorePromotionalPrice(item: PriceItemLike): string | null {
+function resolveRestorePromotionalPrice(item: PriceItemLike): string {
   const original = toNullableNumber(item.originalPromotionalPrice);
   const offer = toNullableNumber(item.offerPrice);
 
-  if (original == null) return null;
-  if (offer != null && moneyEq(original, offer)) return null;
+  if (original == null) return "";
+  if (offer != null && moneyEq(original, offer)) return "";
   return original.toFixed(2);
 }
 
@@ -287,6 +293,26 @@ async function sendVariantPatches(
       );
       attemptsByProduct[String(group.productId)] = attempts;
 
+      if (action === "restore" && Array.isArray(response)) {
+        const expectedClear = new Set(
+          group.variants
+            .filter((v) => v.promotional_price === "")
+            .map((v) => v.id),
+        );
+        const stillPromo = response.filter((row) => {
+          const id = Number((row as { id?: unknown }).id);
+          if (!expectedClear.has(id)) return false;
+          const promo = (row as { promotional_price?: unknown })
+            .promotional_price;
+          return promo != null && promo !== "";
+        });
+        if (stillPromo.length) {
+          throw new Error(
+            `promotional_price não foi limpo em ${stillPromo.length} variante(s) (API ignorou null/valor)`,
+          );
+        }
+      }
+
       console.info(`[offer-prices] ${action} product ok`, {
         storeId,
         productId: group.productId,
@@ -476,9 +502,9 @@ export async function restoreOfferPrices(params: {
   console.info("[offer-prices] restore payload", {
     offerId: params.offer.id,
     sample: groups.slice(0, 2),
-    clearedAsNull: groups
+    clearedAsEmptyString: groups
       .flatMap((g) => g.variants)
-      .filter((v) => v.promotional_price == null).length,
+      .filter((v) => v.promotional_price === "").length,
   });
 
   const { errors, attemptsByProduct } = await sendVariantPatches(

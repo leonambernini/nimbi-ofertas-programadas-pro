@@ -233,11 +233,20 @@ export async function patchProductVariants(
     promotional_price?: string | number | null;
   }>,
 ): Promise<unknown> {
+  /**
+   * Nuvemshop ignora `promotional_price: null` no PATCH (não limpa).
+   * String vazia remove o preço promocional.
+   */
+  const normalized = variants.map((variant) => {
+    if (variant.promotional_price !== null) return variant;
+    return { ...variant, promotional_price: "" };
+  });
+
   console.info("[nuvemshop] PATCH variants", {
     storeId,
     productId,
-    variantCount: variants.length,
-    sample: variants.slice(0, 3),
+    variantCount: normalized.length,
+    sample: normalized.slice(0, 3),
   });
   return nuvemshopRequest(
     storeId,
@@ -245,7 +254,7 @@ export async function patchProductVariants(
     `/products/${productId}/variants`,
     {
       method: "PATCH",
-      body: variants,
+      body: normalized,
     },
   );
 }

@@ -1,0 +1,156 @@
+{
+  "storeId": "6215149",
+  "generatedAt": "2026-08-05T12:54:16.642Z",
+  "filters": {
+    "action": null,
+    "success": null,
+    "offerId": null,
+    "limit": null
+  },
+  "total": 3,
+  "returned": 3,
+  "logs": [
+    {
+      "id": "cmsg2rda70003l504yb9vfiqu",
+      "action": "restore",
+      "success": true,
+      "message": "restored",
+      "details": {
+        "force": false,
+        "errors": [],
+        "sample": [
+          {
+            "variants": [
+              {
+                "id": 1527189573,
+                "price": "38.99",
+                "promotional_price": null
+              },
+              {
+                "id": 1527189575,
+                "price": "38.99",
+                "promotional_price": null
+              },
+              {
+                "id": 1527189579,
+                "price": "38.99",
+                "promotional_price": null
+              }
+            ],
+            "productId": 345024398
+          },
+          {
+            "variants": [
+              {
+                "id": 1202253477,
+                "price": "38.50",
+                "promotional_price": null
+              }
+            ],
+            "productId": 270003390
+          }
+        ],
+        "subset": false,
+        "endpoint": "PATCH /products/{id}/variants",
+        "itemCount": 4,
+        "maxAttempts": 3,
+        "productCount": 2,
+        "attemptsByProduct": {
+          "270003390": 1,
+          "345024398": 1
+        }
+      },
+      "createdAt": "2026-08-05T12:40:10.496Z",
+      "offer": {
+        "id": "cmsg1altz0001l304p6915b8s",
+        "name": "Novo teste",
+        "status": "ended",
+        "enabled": true,
+        "pricesApplied": false,
+        "autoApplyPrices": true,
+        "startsAt": "2026-08-05T11:55:00.000Z",
+        "endsAt": "2026-08-05T12:40:00.000Z"
+      }
+    },
+    {
+      "id": "cmsg2rctm0001l504ddsdpm1h",
+      "action": "deactivate",
+      "success": true,
+      "message": "active → ended",
+      "details": {
+        "now": "2026-08-05T12:40:09.865Z",
+        "endsAt": "2026-08-05T12:40:00.000Z",
+        "startsAt": "2026-08-05T11:55:00.000Z"
+      },
+      "createdAt": "2026-08-05T12:40:09.899Z",
+      "offer": {
+        "id": "cmsg1altz0001l304p6915b8s",
+        "name": "Novo teste",
+        "status": "ended",
+        "enabled": true,
+        "pricesApplied": false,
+        "autoApplyPrices": true,
+        "startsAt": "2026-08-05T11:55:00.000Z",
+        "endsAt": "2026-08-05T12:40:00.000Z"
+      }
+    },
+    {
+      "id": "cmsg1amql0007l304w5p3adcv",
+      "action": "apply",
+      "success": true,
+      "message": "reapplied",
+      "details": {
+        "force": true,
+        "errors": [],
+        "sample": [
+          {
+            "variants": [
+              {
+                "id": 1202253477,
+                "promotional_price": "34.65"
+              }
+            ],
+            "productId": 270003390
+          },
+          {
+            "variants": [
+              {
+                "id": 1527189573,
+                "promotional_price": "35.09"
+              },
+              {
+                "id": 1527189575,
+                "promotional_price": "35.09"
+              },
+              {
+                "id": 1527189579,
+                "promotional_price": "35.09"
+              }
+            ],
+            "productId": 345024398
+          }
+        ],
+        "subset": true,
+        "endpoint": "PATCH /products/{id}/variants",
+        "itemCount": 4,
+        "maxAttempts": 3,
+        "productCount": 2,
+        "attemptsByProduct": {
+          "270003390": 1,
+          "345024398": 1
+        }
+      },
+      "createdAt": "2026-08-05T11:59:09.981Z",
+      "offer": {
+        "id": "cmsg1altz0001l304p6915b8s",
+        "name": "Novo teste",
+        "status": "ended",
+        "enabled": true,
+        "pricesApplied": false,
+        "autoApplyPrices": true,
+        "startsAt": "2026-08-05T11:55:00.000Z",
+        "endsAt": "2026-08-05T12:40:00.000Z"
+      }
+    }
+  ]
+}
