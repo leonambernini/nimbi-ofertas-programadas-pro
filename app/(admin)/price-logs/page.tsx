@@ -15,7 +15,7 @@ import {
   Text,
   useToast,
 } from "@nimbus-ds/components";
-import { EyeIcon, ListIcon, SlidersIcon } from "@nimbus-ds/icons";
+import { EyeIcon, HistoryIcon, ListIcon, SlidersIcon } from "@nimbus-ds/icons";
 import { EmptyMessage, Page } from "@nimbus-ds/patterns";
 import {
   listPriceSyncLogs,
@@ -469,21 +469,20 @@ export default function PriceLogsPage() {
                             <IconButton
                               source={<EyeIcon />}
                               size="2rem"
+                              title={dict.priceLogs.viewDetails}
                               aria-label={dict.priceLogs.viewDetails}
                               onClick={() => setDetailLog(log)}
                             />
                             {(log.action === "restore" ||
                               log.offer.pricesApplied) && (
-                              <Button
-                                appearance="neutral"
-                                size="small"
+                              <IconButton
+                                source={<HistoryIcon />}
+                                size="2rem"
+                                title={dict.priceLogs.retryRestoreTitle}
+                                aria-label={dict.priceLogs.retryRestoreTitle}
                                 disabled={busyId === log.id}
                                 onClick={() => void handleRetry(log)}
-                              >
-                                {busyId === log.id
-                                  ? "..."
-                                  : dict.priceLogs.retryRestore}
-                              </Button>
+                              />
                             )}
                           </Box>
                         </Table.Cell>

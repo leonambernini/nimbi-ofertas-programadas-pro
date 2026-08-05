@@ -385,6 +385,7 @@ export type Dictionary = {
     colMessage: string;
     colPricesApplied: string;
     retryRestore: string;
+    retryRestoreTitle: string;
     retryOk: string;
     retryFail: string;
     yes: string;
@@ -884,6 +885,8 @@ const pt: Dictionary = {
     colMessage: "Detalhe",
     colPricesApplied: "Preços na loja",
     retryRestore: "Tentar restaurar",
+    retryRestoreTitle:
+      "Tentar restaurar os preços originais desta campanha na Nuvemshop",
     retryOk: "Restore reenviado com sucesso.",
     retryFail: "Falha ao restaurar. Veja o novo log.",
     yes: "Sim",
@@ -1268,6 +1271,8 @@ const es: Dictionary = {
     colMessage: "Detalle",
     colPricesApplied: "Precios en la tienda",
     retryRestore: "Intentar restaurar",
+    retryRestoreTitle:
+      "Intentar restaurar los precios originales de esta campaña en Nuvemshop",
     retryOk: "Restore reenviado con éxito.",
     retryFail: "Error al restaurar. Revisá el nuevo log.",
     yes: "Sí",
